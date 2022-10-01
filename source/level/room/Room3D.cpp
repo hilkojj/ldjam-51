@@ -104,45 +104,47 @@ void Room3D::update(double deltaTime)
 {
     Room::update(deltaTime);
 
-    entities.view<Transform, TransformChild>().each([&](Transform &t, TransformChild &child) {
+    for (int i = 0; i < 2; i++)
+    {   // TODO: game jam hack.
+        entities.view<Transform, TransformChild>().each([&](Transform &t, TransformChild &child) {
 
-        if (!entities.valid(child.parentEntity))
-            return;
+            if (!entities.valid(child.parentEntity))
+                return;
 
-        if (auto parentTransComp = entities.try_get<Transform>(child.parentEntity))
-        {
-            if (child.offsetInWorldSpace)
+            if (auto parentTransComp = entities.try_get<Transform>(child.parentEntity))
             {
-                t.position = child.position ? (*parentTransComp).position : mu::ZERO_3;
-                t.rotation = child.rotation ? (*parentTransComp).rotation : quat(1, 0, 0, 0);
-                t.scale = child.scale ? (*parentTransComp).scale : mu::ONE_3;
+                if (child.offsetInWorldSpace)
+                {
+                    t.position = child.position ? (*parentTransComp).position : mu::ZERO_3;
+                    t.rotation = child.rotation ? (*parentTransComp).rotation : quat(1, 0, 0, 0);
+                    t.scale = child.scale ? (*parentTransComp).scale : mu::ONE_3;
 
-                t.position += child.offset.position;
-                t.rotation = child.offset.rotation * t.rotation;
-                t.scale = child.offset.scale * t.scale;
+                    t.position += child.offset.position;
+                    t.rotation = child.offset.rotation * t.rotation;
+                    t.scale = child.offset.scale * t.scale;
+                }
+                else
+                {
+                    mat4 parentTrans(1.0f);
+
+                    if (child.position)
+                        parentTrans = glm::translate(parentTrans, (*parentTransComp).position);
+
+                    if (child.rotation)
+                        parentTrans *= glm::toMat4((*parentTransComp).rotation);
+
+                    if (child.scale)
+                        parentTrans = glm::scale(parentTrans, (*parentTransComp).scale);
+
+                    mat4 childTrans = transformFromComponent(child.offset);
+                    mat4 resultTrans = parentTrans * childTrans;
+
+                    // TODO: not sure this is the fastest way
+                    decomposeMtx(resultTrans, t.position, t.rotation, t.scale);
+                }
             }
-            else
-            {
-                mat4 parentTrans(1.0f);
-
-                if (child.position)
-                    parentTrans = glm::translate(parentTrans, (*parentTransComp).position);
-
-                if (child.rotation)
-                    parentTrans *= glm::toMat4((*parentTransComp).rotation);
-
-                if (child.scale)
-                    parentTrans = glm::scale(parentTrans, (*parentTransComp).scale);
-
-                mat4 childTrans = transformFromComponent(child.offset);
-                mat4 resultTrans = parentTrans * childTrans;
-
-                // TODO: not sure this is the fastest way
-                decomposeMtx(resultTrans, t.position, t.rotation, t.scale);
-            }
-        }
-    });
-
+        });
+    }
     updateOrCreateCamera(deltaTime);
 }
 

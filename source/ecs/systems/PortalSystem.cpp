@@ -1,9 +1,12 @@
 
+#include <generated/Children.hpp>
+#include <generated/PlayerControlled.hpp>
 #include "PortalSystem.h"
 #include "PhysicsSystem.h"
 
 #include "../../generated/Physics.hpp"
 #include "../../generated/Portal.hpp"
+#include "../../game/Game.h"
 
 void PortalSystem::init(EntityEngine *engine)
 {
@@ -99,6 +102,29 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
 
     room->entities.view<TeleportedByPortal>().each([&](TeleportedByPortal &teleportedByPortal) {
         teleportedByPortal.timeSinceTeleport += deltaTime;
+    });
+
+    room->entities.view<Transform, PortalGun>().each([&](auto e, const Transform &t, const PortalGun &gun) {
+
+        if (const Child *child = room->entities.try_get<Child>(e))
+        {
+            if (room->entities.has<PlayerControlled>(child->parent))
+            {
+                if (MouseInput::justPressed(GLFW_MOUSE_BUTTON_LEFT))// && !Game::settings.unlockCamera)
+                {
+                    vec3 direction = rotate(t.rotation, -mu::Z);
+
+                    room->getPhysics().rayTest(t.position, t.position + direction * 500.0f, [&](entt::entity wallEntity, const vec3 &hitPoint, const vec3 &normal) {
+
+                        entt::entity portal = room->getTemplate("Portal").create();
+                        Transform &portalTransform = room->entities.get_or_assign<Transform>(portal);
+                        portalTransform.position = hitPoint - normal * 0.01f;
+                        portalTransform.rotation = quatLookAt(-normal, mu::Y);
+
+                    }, true, gun.collideWithMaskBits);
+                }
+            }
+        }
     });
 }
 

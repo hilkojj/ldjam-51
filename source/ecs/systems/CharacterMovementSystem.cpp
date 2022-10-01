@@ -12,7 +12,7 @@ void CharacterMovementSystem::init(EntityEngine *engine)
 {
     room = dynamic_cast<Room3D *>(engine);
     if (!room) throw gu_err("engine is not a room");
-    updateFrequency = 60;
+    //updateFrequency = 60;
 }
 
 void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
@@ -122,9 +122,9 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
                 physics.applyForce(rb, gravDir * 1000.f * dT);
         }
 
-        if (cm.onGround)
+        //if (cm.onGround)
         {
-            if (cm.jumpInput && !cm.jumpStarted)
+            if (cm.onGround && cm.jumpInput && !cm.jumpStarted)
             {
                 physics.applyForce(rb, up * cm.jumpForce);
                 cm.jumpStarted = true;
@@ -136,7 +136,7 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
             vec3 currVerticalVel = localToWorld * vec4(0, currVelLocal.y, 0, 0);
 
             vec3 velocity = forward * min(1.f, (cm.walkDirInput.y)) * cm.walkSpeed + currVerticalVel;
-            velocity += oldRight * min(1.f, (cm.walkDirInput.x)) * cm.walkSpeed + currVerticalVel;
+            velocity += oldRight * min(1.f, (cm.walkDirInput.x)) * cm.walkSpeed;
 
             velocity = mix(currVelocity, velocity, min(1.f, dT * 10.f + justLanded));
             physics.setLinearVelocity(rb, velocity);

@@ -10,7 +10,7 @@ function create(player)
 
     setComponents(player, {
         Transform {
-            position = vec3(0, 1, 0)
+            position = vec3(0, 3, 0)
         },
         RenderModel {
             modelName = "SmallMan",
@@ -58,6 +58,7 @@ function create(player)
         --Inspecting()
     })
 
+
     local dropShadowSun = createChild(player, "drop shadow sun")
     setComponents(dropShadowSun, {
         Transform(),
@@ -97,6 +98,18 @@ function create(player)
                     parentEntity = player,
                     offset = Transform {
                         position = vec3(0, 0.75, 0),
+                    },
+                    scale = false
+                }
+            })
+
+            local gun = createChild(player, "gun")
+            applyTemplate(gun, "PortalGun")
+            setComponents(gun, {
+                TransformChild {
+                    parentEntity = cam,
+                    offset = Transform {
+                        position = vec3(0.1, -0.1, -0.05),
                     },
                     scale = false
                 }

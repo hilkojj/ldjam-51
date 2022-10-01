@@ -10,3 +10,6 @@ Portal:
 
 TeleportedByPortal:
   timeSinceTeleport: [float, 0.0f]
+
+PortalGun:
+  collideWithMaskBits: [int, 0]
