@@ -11,6 +11,7 @@
 #include "../../ecs/systems/ArmatureAnimationSystem.h"
 #include "../../ecs/systems/PhysicsSystem.h"
 #include "../../ecs/systems/GravitySystem.h"
+#include "../../ecs/systems/PortalSystem.h"
 #include "../../ecs/systems/CharacterMovementSystem.h"
 #include "../../ecs/systems/PositionedAudioSystem.h"
 #include "../../ecs/systems/graphics/CustomShaderSystem.h"
@@ -34,6 +35,7 @@ Room3D::Room3D()
     addSystem(new ArmatureAnimationSystem("Armature animations"));
     addSystem(physics);
     addSystem(new GravitySystem("Gravity fields"));
+    addSystem(new PortalSystem("Portals"));
     addSystem(new CharacterMovementSystem("Character movement"));
     addSystem(new PositionedAudioSystem("Positioned audio"));
     addSystem(new CustomShaderSystem("Custom shaders"));

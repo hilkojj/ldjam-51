@@ -14,6 +14,7 @@
 #include "../../../game/Game.h"
 #include "EnvironmentMap.h"
 #include "../../../ecs/systems/PhysicsSystem.h"
+#include "../../../ecs/systems/PortalSystem.h"
 #include "../../../ecs/systems/graphics/CustomShaderSystem.h"
 
 #include <generated/Inspecting.hpp>
@@ -264,11 +265,10 @@ void RoomScreen::renderPortalTexture(entt::entity portalE, Portal &portalA, cons
 
     mat4 transformPortalAMat = room->transformFromComponent(transformPortalA);
     mat4 transformPortalBMat = room->transformFromComponent(transformPortalB);
+
     mat4 transformRoomCameraMat = room->transformFromComponent(transformRoomCamera);
 
-    mat4 deltaPortalAToPortalB = transformPortalBMat * inverse(transformPortalAMat);
-
-    mat4 transformPortalACameraMat = deltaPortalAToPortalB * transformRoomCameraMat;
+    mat4 transformPortalACameraMat = PortalSystem::teleportThroughPortals(transformPortalAMat, transformPortalBMat, transformRoomCameraMat);
     room->decomposeMtx(transformPortalACameraMat, transformPortalACamera.position, transformPortalACamera.rotation, transformPortalACamera.scale);
 
     room->entities.assign_or_replace<CameraPerspective>(portalACameraE, roomCameraPerspective);
@@ -292,7 +292,7 @@ void RoomScreen::renderPortalTexture(entt::entity portalE, Portal &portalA, cons
 
     vec3 normalPortalB = transformPortalBMat * vec4(0, 0, 1, 0);
 
-    renderContext.clipPlane = vec4(normalPortalB.x, normalPortalB.y, normalPortalB.z, dot(transformPortalB.position, -normalPortalB));
+    renderContext.clipPlane = PortalSystem::getPortalPlane(transformPortalB);
 
     portalA.fbo->bind();
 
@@ -343,6 +343,15 @@ void RoomScreen::renderDebugStuff(double deltaTime)
 {
     if (!dibidab::settings.showDeveloperOptions)
         return;
+
+    if (KeyInput::justPressed(Game::settings.keyInput.unlockCamera))
+    {
+        Game::settings.unlockCamera = !Game::settings.unlockCamera;
+    }
+    if (Game::settings.unlockCamera)
+    {
+        MouseInput::setLockedMode(false);
+    }
 
     gu::profiler::Zone z("debug");
     assert(room->camera != NULL);
@@ -469,6 +478,7 @@ RoomScreen::~RoomScreen()
     delete fbo;
     delete blurPingPongFbos[0];
     delete blurPingPongFbos[1];
+    MouseInput::setLockedMode(false);
 }
 
 inline void prepareMeshVertBuffer(const SharedMesh &mesh)

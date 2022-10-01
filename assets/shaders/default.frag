@@ -69,6 +69,11 @@ uniform sampler2D brdfLUT;
 
 uniform vec3 camPosition;
 
+#ifdef PORTAL_RENDER
+in vec4 v_worldPosition;
+uniform vec4 clipPlane;
+#endif
+
 #ifndef NR_OF_DIR_LIGHTS
 #define NR_OF_DIR_LIGHTS 0
 #endif
@@ -256,6 +261,15 @@ void dirShadowLightRadiance(DirectionalShadowLight light, vec3 N, vec3 V, vec3 F
 
 void main()
 {
+    #ifdef WEB_GL
+    #ifdef PORTAL_RENDER
+    if (dot(v_worldPosition, clipPlane) > 0.0f)
+    {
+        discard;
+    }
+    #endif
+    #endif
+
     vec3 albedo = diffuse;
     if (useDiffuseTexture == 1)
     {

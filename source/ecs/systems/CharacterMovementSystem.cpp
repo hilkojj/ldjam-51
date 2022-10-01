@@ -135,7 +135,8 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
 
             vec3 currVerticalVel = localToWorld * vec4(0, currVelLocal.y, 0, 0);
 
-            vec3 velocity = forward * min(1.f, (cm.walkDirInput.y + abs(cm.walkDirInput.x * .3f))) * cm.walkSpeed + currVerticalVel;
+            vec3 velocity = forward * min(1.f, (cm.walkDirInput.y)) * cm.walkSpeed + currVerticalVel;
+            velocity += oldRight * min(1.f, (cm.walkDirInput.x)) * cm.walkSpeed + currVerticalVel;
 
             velocity = mix(currVelocity, velocity, min(1.f, dT * 10.f + justLanded));
             physics.setLinearVelocity(rb, velocity);
@@ -158,8 +159,10 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
             }
         }
 
+        /*
         float rotateAmount = min(1.f, abs(cm.walkDirInput.x) * 2.f);
         t.rotation = rotate(t.rotation, cm.walkDirInput.x * dT * -2.f * rotateAmount, mu::Y);
+         */
     });
 
     room->entities.view<Transform, ThirdPersonFollowing>().each([&](auto e, Transform &t, ThirdPersonFollowing &following) {
@@ -229,5 +232,41 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
             auto camTargetDir = camTargetDiff / camTargetDist;
             t.rotation = slerp(t.rotation, quatLookAt(camTargetDir, mu::Y), dT * 20.f);
         }
+    });
+
+    if (Game::settings.unlockCamera)
+    {
+        return;
+    }
+
+    room->entities.view<TransformChild, FirstPersonCamera>().each([&](auto e, TransformChild &t, FirstPersonCamera &firstPerson) {
+
+        if (!room->entities.valid(firstPerson.target))
+        {
+            return;
+        }
+        Transform *playerTransform = room->entities.try_get<Transform>(firstPerson.target);
+        if (playerTransform == nullptr)
+        {
+            return;
+        }
+
+        /*
+        mat4 playerTransformMat = room->transformFromComponent(*playerTransform);
+        vec3 right = playerTransformMat * vec4(1, 0, 0, 0);
+         */
+
+        if (gu::width <= 0 || gu::height <= 0)
+        {
+            return;
+        }
+
+        MouseInput::setLockedMode(true);
+        t.offset.rotation = rotate(t.offset.rotation,
+                                float(MouseInput::deltaMouseY * mu::DEGREES_TO_RAD) * -Game::settings.firstPersonMouseSensitivity * 0.1f,
+                                mu::X);
+        playerTransform->rotation = rotate(playerTransform->rotation,
+                                float(MouseInput::deltaMouseX * mu::DEGREES_TO_RAD) * -Game::settings.firstPersonMouseSensitivity * 0.1f,
+                                mu::Y);
     });
 }

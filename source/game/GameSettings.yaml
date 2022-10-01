@@ -43,6 +43,7 @@ KeyInputSettings @not_a_component @json_with_keys:
   flyCamera: [KeyInput::Key, GLFW_KEY_F9]
   retryLevel: [KeyInput::Key, GLFW_KEY_F10]
   stopFlyingCamera: [KeyInput::Key, GLFW_KEY_ESCAPE]
+  unlockCamera: [KeyInput::Key, GLFW_KEY_F8]
 
   moveEntity: [KeyInput::Key, GLFW_KEY_G]
   gizmoNeedCtrl: [bool, true]
@@ -59,6 +60,9 @@ GamepadInputSettings @not_a_component @json_with_keys:
   test: [GamepadInput::Button, GLFW_GAMEPAD_BUTTON_B]
 
 Settings @not_a_component @json_with_keys:
+
+  firstPersonMouseSensitivity: [float, 1.0f]
+  unlockCamera: [bool, false]
 
   graphics: GraphicsSettings
   audio: AudioSettings

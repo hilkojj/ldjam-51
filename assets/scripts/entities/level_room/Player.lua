@@ -53,7 +53,7 @@ function create(player)
             defaultGravity = vec3(0, -30, 0)
         },
         CharacterMovement {
-            inputInCameraSpace = true
+            --inputInCameraSpace = true
         }
         --Inspecting()
     })
@@ -72,7 +72,7 @@ function create(player)
         },
         ShadowRenderer {
             visibilityMask = masks.PLAYER,
-            resolution = ivec2(64),
+            resolution = ivec2(256),
             frustrumSize = vec2(2),
             farClipPlane = 16
         }
@@ -86,6 +86,22 @@ function create(player)
                 visibilityRayMask = masks.STATIC_TERRAIN
             }
         })
+    else
+        cam = getByName("1st_person_camera")
+        if valid(cam) then
+            setComponents(cam, {
+                FirstPersonCamera {
+                    target = player
+                },
+                TransformChild {
+                    parentEntity = player,
+                    offset = Transform {
+                        position = vec3(0, 0.75, 0),
+                    },
+                    scale = false
+                }
+            })
+        end
     end
 
     local sun = getByName("sun")

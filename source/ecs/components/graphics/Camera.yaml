@@ -4,6 +4,9 @@ CameraPerspective:
   farClipPlane: [float, 1000]
   visibilityMask: [uint, 1]
 
+FirstPersonCamera:
+  target: [entt::entity, entt::null]
+
 ThirdPersonFollowing:
   target: [entt::entity, entt::null]
   backwardsDistance: [float, 8]

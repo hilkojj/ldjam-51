@@ -6,6 +6,8 @@ defaultArgs({
     name = ""
 })
 
+masks = include("scripts/entities/level_room/_masks")
+
 function create(cam, args)
 
     setComponents(cam, {
@@ -13,7 +15,7 @@ function create(cam, args)
             fieldOfView = 75,
             nearClipPlane = .1,
             farClipPlane = 1000,
-            visibilityMask = -1
+            visibilityMask = -1 & ~masks.PLAYER
         }
     })
 

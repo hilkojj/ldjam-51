@@ -7,3 +7,6 @@ Portal:
   linkedPortalName: [string, "TestPortal"]
   _cpp_only:
     fbo: [FrameBuffer *, nullptr]
+
+TeleportedByPortal:
+  timeSinceTeleport: [float, 0.0f]

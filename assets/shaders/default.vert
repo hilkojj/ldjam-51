@@ -19,6 +19,7 @@ uniform vec3 camPosition;
 
 #ifdef PORTAL_RENDER
 uniform vec4 clipPlane;
+out vec4 v_worldPosition;
 #endif
 
 out vec3 v_position;
@@ -54,6 +55,10 @@ void main()
     #endif
 
     #ifdef PORTAL_RENDER
+    #ifndef WEB_GL
     gl_ClipDistance[0] = -dot(worldPosition, clipPlane);
     #endif
+    v_worldPosition = worldPosition;
+    #endif
+
 }

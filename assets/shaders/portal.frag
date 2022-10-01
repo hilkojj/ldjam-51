@@ -4,6 +4,8 @@ precision mediump float;
 in float v_fog;
 #endif
 
+in vec2 v_textureCoord;
+
 layout (location = 0) out vec4 colorOut;
 #if BLOOM
 layout (location = 1) out vec4 brightColor;
@@ -18,7 +20,7 @@ void main()
 {
     if (hasPortalTexture == 1)
     {
-        colorOut = texture(portalTexture, gl_FragCoord.xy / screenSize) + vec4(0.2f);
+        colorOut = texture(portalTexture, gl_FragCoord.xy / screenSize);
         #if BLOOM
         brightColor = vec4(0.0f);
         #endif
