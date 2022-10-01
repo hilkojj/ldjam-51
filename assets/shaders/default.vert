@@ -17,6 +17,10 @@ uniform mat4 transform;
 
 uniform vec3 camPosition;
 
+#ifdef PORTAL_RENDER
+uniform vec4 clipPlane;
+#endif
+
 out vec3 v_position;
 out vec2 v_textureCoord;
 out mat3 v_TBN;
@@ -34,7 +38,8 @@ void main()
 
     gl_Position = mvp * vec4(a_position, 1.0);
 
-    v_position = vec3(transform * vec4(a_position, 1.0));
+    vec4 worldPosition = transform * vec4(a_position, 1.0);
+    v_position = vec3(worldPosition);
     v_textureCoord = a_textureCoord;
 
     mat3 dirTrans = mat3(transform);
@@ -46,5 +51,9 @@ void main()
     v_TBN = mat3(tangent, bitan, normal);
     #if FOG
     v_fog = 1. - max(0., min(1., (length(v_position - camPosition) - FOG_START) / (FOG_END - FOG_START)));
+    #endif
+
+    #ifdef PORTAL_RENDER
+    gl_ClipDistance[0] = -dot(worldPosition, clipPlane);
     #endif
 }

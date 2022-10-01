@@ -55,6 +55,8 @@ class Room3D : public Room
 
     Camera *cameraFromEntity(entt::entity) const;
 
+    static void decomposeMtx(const mat4 &m, vec3 &pos, quat &rot, vec3 &scale);
+
     static mat4 transformFromComponent(const Transform &);
 
     virtual void toJson(json &) override;

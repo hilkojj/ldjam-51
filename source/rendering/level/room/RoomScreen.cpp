@@ -5,6 +5,7 @@
 #include <graphics/orthographic_camera.h>
 #include <utils/quad_renderer.h>
 #include "RoomScreen.h"
+#include "../../../generated/Portal.hpp"
 #include "../../../generated/Camera.hpp"
 #include "../../../generated/Model.hpp"
 #include "../../../generated/Light.hpp"
@@ -17,6 +18,7 @@
 
 #include <generated/Inspecting.hpp>
 #include <im3d.h>
+#include <graphics/3d/perspective_camera.h>
 
 const GLubyte dummyTexData[] = {0, 0, 0};
 
@@ -69,12 +71,38 @@ RoomScreen::RoomScreen(Room3D *room, bool showRoomEditor)
             "shaders/skybox.vert", "shaders/skybox.frag"
         ),
 
+        portalShader(
+            "portal shader",
+            "shaders/portal.vert", "shaders/portal.frag"
+        ),
+
+        defaultShaderPortalRender(
+                "default shader (portal render)",
+                "shaders/default.vert", "shaders/default.frag",
+                false
+        ),
+        riggedShaderPortalRender(
+                "rigged shader (portal render)",
+                "shaders/rigged.vert", "shaders/default.frag",
+                false
+        ),
+        instancedShaderPortalRender(
+                "instanced shader (portal render)",
+                "shaders/default.vert", "shaders/default.frag",
+                false
+        ),
+
         dummyTexture(Texture::fromByteData(&dummyTexData[0], GL_RGB, 1, 1, GL_NEAREST, GL_NEAREST))
 {
     assert(room != NULL);
 
     instancedShader.definitions.define("INSTANCED");
     instancedDepthShader.definitions.define("INSTANCED");
+
+    defaultShaderPortalRender.definitions.define("PORTAL_RENDER");
+    riggedShaderPortalRender.definitions.define("PORTAL_RENDER");
+    instancedShaderPortalRender.definitions.define("PORTAL_RENDER");
+    instancedShaderPortalRender.definitions.define("INSTANCED");
 
     inspector.createEntity_showSubFolder = "level_room";
     EnvironmentMap::getBRDFLookUpTexture(); // create once.
@@ -146,10 +174,16 @@ void RoomScreen::render(double deltaTime)
         });
     }
 
+    room->entities.view<Transform, Portal>().each([&](auto e, Transform &t, Portal &portal) {
+
+        renderPortalTexture(e, portal, t);
+    });
+
     RenderContext finalImg { *room->camera, defaultShader, riggedShader, instancedShader };
     finalImg.mask = ~0u;
     finalImg.shadows = Game::settings.graphics.shadows;
     finalImg.skyShader = &skyShader;
+    finalImg.portals = true;
 
     if (room->environmentMap.isSet())
         finalImg.skyBox = (irradianceMapAsSkyBox ? room->environmentMap->irradianceMap : room->environmentMap->original).get();
@@ -204,6 +238,75 @@ void RoomScreen::render(double deltaTime)
     renderDebugStuff(deltaTime);
 }
 
+void RoomScreen::renderPortalTexture(entt::entity portalE, Portal &portalA, const Transform &transformPortalA)
+{
+    entt::entity portalBEntity = room->getByName(portalA.linkedPortalName.c_str());
+
+    bool portalBValid = false;
+
+    if (portalBEntity != entt::null) {
+        portalBValid = room->entities.has<Portal>(portalBEntity) && room->entities.has<Transform>(portalBEntity);
+    }
+    if (!portalBValid) {
+        delete portalA.fbo;
+        portalA.fbo = nullptr;
+        return;
+    }
+
+    entt::entity portalACameraE = room->getChildByName(portalE, "Camera");
+    Transform &transformPortalACamera = room->entities.get<Transform>(portalACameraE);
+
+    const Portal &portalB = room->entities.get<Portal>(portalBEntity);
+    const Transform &transformPortalB = room->entities.get<Transform>(portalBEntity);
+
+    const Transform &transformRoomCamera = room->entities.get<Transform>(room->cameraEntity);
+    const CameraPerspective &roomCameraPerspective = room->entities.get<CameraPerspective>(room->cameraEntity);
+
+    mat4 transformPortalAMat = room->transformFromComponent(transformPortalA);
+    mat4 transformPortalBMat = room->transformFromComponent(transformPortalB);
+    mat4 transformRoomCameraMat = room->transformFromComponent(transformRoomCamera);
+
+    mat4 deltaPortalAToPortalB = transformPortalBMat * inverse(transformPortalAMat);
+
+    mat4 transformPortalACameraMat = deltaPortalAToPortalB * transformRoomCameraMat;
+    room->decomposeMtx(transformPortalACameraMat, transformPortalACamera.position, transformPortalACamera.rotation, transformPortalACamera.scale);
+
+    room->entities.assign_or_replace<CameraPerspective>(portalACameraE, roomCameraPerspective);
+    Camera *portalACamera = room->cameraFromEntity(portalACameraE);
+    assert(portalACamera);
+
+    if (portalA.fbo == nullptr)
+    {
+        portalA.fbo = new FrameBuffer(gu::width * 0.5f, gu::height * 0.5f);
+        portalA.fbo->addDepthBuffer();
+        portalA.fbo->addColorTexture(GL_RGBA16F, GL_RGBA, GL_LINEAR, GL_NEAREST, GL_FLOAT);  // normal HDR color
+    }
+
+    RenderContext renderContext { *portalACamera, defaultShaderPortalRender, riggedShaderPortalRender, instancedShaderPortalRender };
+    renderContext.mask = ~0u;
+    //renderContext.shadows = false; // TODO: actually disable shadows.
+    renderContext.skyShader = &skyShader;
+    renderContext.portals = false;
+    renderContext.customShaders = false;
+    renderContext.enableClipPlane = true;
+
+    vec3 normalPortalB = transformPortalBMat * vec4(0, 0, 1, 0);
+
+    renderContext.clipPlane = vec4(normalPortalB.x, normalPortalB.y, normalPortalB.z, dot(transformPortalB.position, -normalPortalB));
+
+    portalA.fbo->bind();
+
+    glClearColor(0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // TODO set viewport
+
+    renderRoom(renderContext);
+
+    portalA.fbo->unbind();
+    delete portalACamera;
+}
+
 void RoomScreen::onResize()
 {
     // using GL_RGBA16F, because without the alpha channel webgl will give errors.
@@ -227,6 +330,11 @@ void RoomScreen::onResize()
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
     }
+
+    room->entities.view<Portal>().each([](Portal &p) {
+        delete p.fbo;
+        p.fbo = nullptr;
+    });
 }
 
 int debugTextI = 0;
@@ -272,6 +380,20 @@ void RoomScreen::renderDebugStuff(double deltaTime)
 
         });
     }
+
+    room->entities.view<Transform, Portal>().each([&](auto e, Transform &t, Portal &portal) {
+
+        mat4 transMat = room->transformFromComponent(t);
+
+        vec3 normalArrowStart = transMat * vec4(0, 0, 0, 1);
+        vec3 normal = transMat * vec4(0, 0, 1, 0);
+        vec3 normalArrowEnd = normalArrowStart + normal;
+
+        lineRenderer.line(normalArrowStart, normalArrowEnd, mu::Z);
+        vec3 squareXAxis = transMat * vec4(1, 0, 0, 0);
+        vec3 squareYAxis = transMat * vec4(0, 1, 0, 0);
+        lineRenderer.square(t.position - squareXAxis - squareYAxis, 2.0f, mu::Z, squareXAxis, squareYAxis);
+    });
 
     gizmoRenderer.beginFrame(deltaTime, vec2(gu::width, gu::height), cam);
     inspector.drawGUI(&cam, lineRenderer, gizmoRenderer);
@@ -423,6 +545,39 @@ void RoomScreen::renderRoom(const RenderContext &con)
 {
     gu::profiler::Zone z("render models");
 
+    if (con.enableClipPlane)
+    {
+        glEnable(GL_CLIP_DISTANCE0);
+    }
+
+    if (con.portals)
+    {
+        portalShader.use();
+        glUniform2fv(portalShader.location("screenSize"), 1, &vec2(gu::width, gu::height)[0]);
+
+        room->entities.view<Transform, Portal>().each([&](auto e, Transform &t, Portal &portal) {
+
+            auto transform = Room3D::transformFromComponent(t);
+
+            mat4 mvp = con.cam.combined * transform;
+            glUniformMatrix4fv(portalShader.location("mvp"), 1, GL_FALSE, &mvp[0][0]);
+
+            if (portal.fbo != nullptr)
+            {
+                portal.fbo->colorTexture->bind(0, portalShader, "portalTexture");
+                glUniform1i(portalShader.location("hasPortalTexture"), 1);
+            }
+            else
+            {
+                dummyTexture.bind(0, portalShader, "portalTexture");
+                glUniform1i(portalShader.location("hasPortalTexture"), 0);
+            }
+
+            Mesh::getQuad()->render();
+
+        });
+    }
+
     initializeShader(con, con.shader);
 
     room->entities.view<Transform, RenderModel>(entt::exclude<Rigged, InstancedRendering>).each([&](auto e, Transform &t, RenderModel &rm) {
@@ -535,6 +690,11 @@ void RoomScreen::renderRoom(const RenderContext &con)
         glEnable(GL_DEPTH_TEST);
         glDisable(GL_BLEND);
         glDepthMask(GL_TRUE);
+    }
+
+    if (con.enableClipPlane)
+    {
+        glDisable(GL_CLIP_DISTANCE0);
     }
 }
 
@@ -748,6 +908,11 @@ void RoomScreen::initializeShader(const RenderContext &con, ShaderProgram &shade
 
     glUniform3fv(shader.location("camPosition"), 1, &con.cam.position[0]);
     glUniform1f(shader.location("time"), room->getLevel().getTime());
+
+    if (con.enableClipPlane)
+    {
+        glUniform4fv(shader.location("clipPlane"), 1, &con.clipPlane[0]);
+    }
 }
 
 void RoomScreen::debugLights()

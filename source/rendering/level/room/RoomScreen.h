@@ -30,9 +30,12 @@ class RoomScreen : public Screen
             shadows = true,
             materials = true,
             riggedModels = true,
-            customShaders = true;
+            customShaders = true,
+            portals = false,
+            enableClipPlane = false;
         ShaderProgram *skyShader = NULL;
         CubeMap *skyBox = NULL;
+        vec4 clipPlane = vec4(0);
     };
 
     bool showRoomEditor = false;
@@ -45,7 +48,11 @@ class RoomScreen : public Screen
     ShaderAsset
         defaultShader, riggedShader, instancedShader, depthShader, riggedDepthShader, instancedDepthShader,
 
-        blurShader, hdrShader, skyShader;
+        blurShader, hdrShader, skyShader,
+
+        defaultShaderPortalRender, riggedShaderPortalRender, instancedShaderPortalRender,
+
+        portalShader;
 
     int prevNrOfPointLights = -1, prevNrOfDirLights = -1, prevNrOfDirShadowLights = -1;
 
@@ -71,6 +78,8 @@ class RoomScreen : public Screen
     ~RoomScreen() override;
 
   private:
+
+    void renderPortalTexture(entt::entity portalE, struct Portal &, const Transform &);
 
     void updateInstancedModels();
 

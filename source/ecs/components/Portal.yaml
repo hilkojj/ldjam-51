@@ -1,0 +1,9 @@
+config:
+  hpp_incl:
+    - graphics/frame_buffer.h
+
+
+Portal:
+  linkedPortalName: [string, "TestPortal"]
+  _cpp_only:
+    fbo: [FrameBuffer *, nullptr]

@@ -86,7 +86,7 @@ void Room3D::initializeLuaEnvironment()
     };
 }
 
-void decomposeMtx(const mat4 &m, vec3 &pos, quat &rot, vec3 &scale)
+void Room3D::decomposeMtx(const mat4 &m, vec3 &pos, quat &rot, vec3 &scale)
 {
     pos = m[3];
     for (int i = 0; i < 3; i++)
