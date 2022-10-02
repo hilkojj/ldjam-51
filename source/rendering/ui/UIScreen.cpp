@@ -81,6 +81,11 @@ void UIScreen::render(double deltaTime)
 
     update(deltaTime); // todo: move this? Update ALL UIScreens? or only the active one?
 
+    if (MouseInput::justPressed(GLFW_MOUSE_BUTTON_LEFT) && luaEnvironment["onClick"].valid())
+    {
+        luau::tryCallFunction(luaEnvironment["onClick"]);
+    }
+
     cursorPosition = cam.getCursorRayDirection() + cam.position;
 
     {   // starting points of the render tree (UIElements that are NOT a Child):

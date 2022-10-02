@@ -233,6 +233,15 @@ void RoomScreen::render(double deltaTime)
     fbo->colorTexture->bind(0, hdrShader, "hdrImage");
     if (bloomBlurFbo)
         bloomBlurFbo->colorTexture->bind(1, hdrShader, "blurImage");
+
+    float canShootSince = 0.0f;
+
+    room->entities.view<PortalGun>().each([&](const PortalGun &gun) {
+        canShootSince = max(canShootSince, gun.canShootSince);
+    });
+
+    glUniform1f(hdrShader.location("canShootSince"), canShootSince);
+    glUniform2fv(hdrShader.location("screenSize"), 1, &vec2(gu::width, gu::height)[0]);
     glUniform1f(hdrShader.location("exposure"), hdrExposure);
     Mesh::getQuad()->render();
 
@@ -480,7 +489,7 @@ RoomScreen::~RoomScreen()
     delete fbo;
     delete blurPingPongFbos[0];
     delete blurPingPongFbos[1];
-    MouseInput::setLockedMode(false);
+    //MouseInput::setLockedMode(false);
 }
 
 inline void prepareMeshVertBuffer(const SharedMesh &mesh)

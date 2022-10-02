@@ -41,7 +41,7 @@ KeyInputSettings @not_a_component @json_with_keys:
   jump: [KeyInput::Key, GLFW_KEY_SPACE]
 
   flyCamera: [KeyInput::Key, GLFW_KEY_F9]
-  retryLevel: [KeyInput::Key, GLFW_KEY_F10]
+  retryLevel: [KeyInput::Key, GLFW_KEY_R]
   stopFlyingCamera: [KeyInput::Key, GLFW_KEY_ESCAPE]
   unlockCamera: [KeyInput::Key, GLFW_KEY_F8]
 
@@ -63,6 +63,7 @@ Settings @not_a_component @json_with_keys:
 
   firstPersonMouseSensitivity: [float, 1.0f]
   unlockCamera: [bool, false]
+  showDeveloperOptions: [bool, false]
 
   graphics: GraphicsSettings
   audio: AudioSettings

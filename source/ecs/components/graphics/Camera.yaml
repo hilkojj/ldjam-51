@@ -6,6 +6,7 @@ CameraPerspective:
 
 FirstPersonCamera:
   target: [entt::entity, entt::null]
+  lockedCamera: [bool, false]
 
 ThirdPersonFollowing:
   target: [entt::entity, entt::null]

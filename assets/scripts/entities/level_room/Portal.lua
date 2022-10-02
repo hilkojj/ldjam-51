@@ -9,6 +9,7 @@ function create(portal, args)
 
     setName(portal, gun.portalName)
 
+    component.PointLight.remove(args.gunE)
     setComponents(portal, {
         Transform(),
         Portal {
@@ -46,6 +47,12 @@ function create(portal, args)
 
     onEntityEvent(portal, "CollisionEnded", function (col)
         print("Portal UNtouch: "..(getName(col.otherEntity) or col.otherEntity))
+    end)
+
+    setOnDestroyCallback(portal, function()
+        if valid(args.gunE) then
+            component.PointLight.getFor(args.gunE).color = vec3(0)
+        end
     end)
 
 end

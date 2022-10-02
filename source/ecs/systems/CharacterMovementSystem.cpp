@@ -6,7 +6,6 @@
 #include "../../game/Game.h"
 #include "PhysicsSystem.h"
 #include <generated/PlayerControlled.hpp>
-#include <input/key_input.h>
 
 void CharacterMovementSystem::init(EntityEngine *engine)
 {
@@ -245,6 +244,13 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
         {
             return;
         }
+
+        if (!Game::settings.unlockCamera)
+        {
+            MouseInput::setLockedMode(true);
+            firstPerson.lockedCamera = true;
+        }
+
         Transform *playerTransform = room->entities.try_get<Transform>(firstPerson.target);
         if (playerTransform == nullptr)
         {
@@ -261,7 +267,6 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
             return;
         }
 
-        MouseInput::setLockedMode(true);
         t.offset.rotation = rotate(t.offset.rotation,
                                 float(MouseInput::deltaMouseY * mu::DEGREES_TO_RAD) * -Game::settings.firstPersonMouseSensitivity * 0.1f,
                                 mu::X);

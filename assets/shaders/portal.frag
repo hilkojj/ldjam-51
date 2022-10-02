@@ -120,7 +120,7 @@ void main()
     float secondFireIntensity = (0.7f + pow(fireNoise(vec2(fireUV.x * 0.3f, -fireUV.y * 0.3f), portalTime * 0.8f), 2.0f) * 0.7f);
 
     vec2 el = v_textureCoord
-        * max(1.0f, pow(clamp(1.0f - portalTime * 10.0f, 0.0f, 1.0f), 2.0f) * 4.0f);   // opening animation
+        * max(1.0f, pow(clamp(1.0f - portalTime * 5.0f, 0.0f, 1.0f), 2.0f) * 4.0f);   // opening animation
 
     float elLen = length(el) + fireIntensity * 0.08f;
     if (elLen > 1.0f)

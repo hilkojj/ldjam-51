@@ -8,8 +8,6 @@
 #include "../../generated/Portal.hpp"
 #include "../../game/Game.h"
 
-#include <glm/gtx/closest_point.hpp>
-
 void PortalSystem::init(EntityEngine *engine)
 {
     EntitySystem::init(engine);
@@ -151,30 +149,36 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
         tp.timeSinceTouch += deltaTime;
     });
 
-    room->entities.view<Transform, PortalGun>().each([&](auto e, const Transform &t, const PortalGun &gun) {
+    room->entities.view<Transform, PortalGun>().each([&](auto e, const Transform &t, PortalGun &gun) {
+
+        bool canShoot = false;
 
         if (const Child *child = room->entities.try_get<Child>(e))
         {
             if (room->entities.has<PlayerControlled>(child->parent))
             {
-                if (MouseInput::justPressed(gun.leftMB ? GLFW_MOUSE_BUTTON_LEFT : GLFW_MOUSE_BUTTON_RIGHT) && !Game::settings.unlockCamera)
-                {
-                    const vec3 direction = rotate(t.rotation, -mu::Z);
+                const vec3 direction = rotate(t.rotation, -mu::Z);
 
-                    bool oppositePortalHit = false;
+                room->getPhysics().rayTest(t.position, t.position + direction * 500.0f, [&](entt::entity wallEntity, const vec3 &hitPoint, const vec3 &normal) {
 
-                    room->getPhysics().rayTest(t.position, t.position + direction * 500.0f, [&](entt::entity oppositePortalEntity, const vec3 &hitPoint, const vec3 &normal) {
+                    gun.canShootSince += deltaTime;
+                    canShoot = true;
 
-                        oppositePortalHit = true;
-
-                    }, false, gun.oppositePortalMaskBits);
-
-                    if (oppositePortalHit)
+                    if (MouseInput::justPressed(gun.leftMB ? GLFW_MOUSE_BUTTON_LEFT : GLFW_MOUSE_BUTTON_RIGHT) && !Game::settings.unlockCamera)
                     {
-                        room->entities.destroy(room->getByName(gun.oppositePortalName.c_str()));
-                    }
 
-                    room->getPhysics().rayTest(t.position, t.position + direction * 500.0f, [&](entt::entity wallEntity, const vec3 &hitPoint, const vec3 &normal) {
+                        bool oppositePortalHit = false;
+
+                        room->getPhysics().rayTest(t.position, t.position + direction * 500.0f, [&](entt::entity oppositePortalEntity, const vec3 &hitPoint, const vec3 &normal) {
+
+                            oppositePortalHit = true;
+
+                        }, false, gun.oppositePortalMaskBits);
+
+                        if (oppositePortalHit)
+                        {
+                            room->entities.destroy(room->getByName(gun.oppositePortalName.c_str()));
+                        }
 
                         entt::entity oldPortal = room->getByName(gun.portalName.c_str());
                         if (room->entities.valid(oldPortal))
@@ -194,9 +198,14 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
                         portalTransform.rotation = quatLookAt(-normal, mu::Y);
 
                         room->emitEntityEvent(e, portal);
-                    }, true, gun.collideWithMaskBits);
-                }
+                    }
+                }, true, gun.collideWithMaskBits);
             }
+        }
+
+        if (!canShoot)
+        {
+            gun.canShootSince = 0.0f;
         }
     });
 }
