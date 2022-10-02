@@ -74,6 +74,16 @@ in vec4 v_worldPosition;
 uniform vec4 clipPlane;
 #endif
 
+#ifdef PORTAL_GUN_COLORED
+uniform vec3 portalGunColor;
+in vec3 v_modelPosition;
+#endif
+
+#ifdef PORTAL_GUN_TIME
+uniform vec3 portalGunColor;
+uniform float gunTimer;
+#endif
+
 #ifndef NR_OF_DIR_LIGHTS
 #define NR_OF_DIR_LIGHTS 0
 #endif
@@ -259,6 +269,101 @@ void dirShadowLightRadiance(DirectionalShadowLight light, vec3 N, vec3 V, vec3 F
 
 // --------------------------------------------
 
+#if PORTAL_GUN_COLORED
+
+vec2 hash(vec2 p)
+{
+    p = vec2(dot(p, vec2(376.0f, 238.0f)), dot(p, vec2(324.0f, 983.0f)));
+    return -1.0f + 2.0f * vec2(fract(sin(p) * 365.0f));
+}
+
+float noise(in vec2 p)
+{
+    const float K1 = 0.366025404f; // (sqrt(3)-1)/2;
+    const float K2 = 0.211324865f; // (3-sqrt(3))/6;
+
+    vec2 i = floor(p + (p.x + p.y) * K1);
+
+    vec2 a = p - i + (i.x + i.y) * K2;
+    vec2 o = (a.x > a.y) ? vec2(1.0f, 0.0f) : vec2(0.0f, 1.0f);
+    vec2 b = a - o + K2;
+    vec2 c = a - 1.0f + 2.0f * K2;
+
+    vec3 h = max(0.5f - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0f);
+
+    vec3 n = h * h * h * h * vec3(dot(a, hash(i)), dot(b, hash(i + o)), dot(c, hash(i + 1.0f)));
+
+    return dot(n, vec3(80.0f));
+}
+
+float fireNoise(vec2 coords, float t)
+{
+    coords.y -= t * 2.0f;
+    float f = 0.5f * noise(coords);
+    coords *= 2.0f;
+    coords.y -= t * 1.0f;
+    f += 0.5f * noise(coords);
+    coords *= 2.0f;
+    coords.x += t * 5.0f;
+    coords.y -= t * 0.5f;
+    f += 0.25f * noise(coords);
+    f = 0.5f + 0.5f * f;
+    return f;
+}
+
+
+mat2 rotate(float angle)
+{
+    return mat2(cos(angle), sin(angle), -sin(angle), cos(angle));
+}
+
+float rand(float x)
+{
+    return fract(sin(x) * 999.0f);
+}
+
+vec2 pmod(vec2 p, float x)
+{
+    return mod(p, x) - 0.5 * x;
+}
+
+float twist(vec2 uv)
+{
+    uv *= 0.25f;
+    float t = time;
+
+    float result = 0.0f;
+    float th = atan(uv.y,uv.x);
+
+    vec2 uv2 = uv + 1.0f;
+    vec2 uv3 = uv;
+    uv = pmod(uv, 5.0f);
+    uv *= rotate(t * 3.5f);
+
+    result += 1.0f * smoothstep(uv.y - 0.1f, uv.y + 0.4f, 0.1f) * 0.5f * step(length(uv), 5.5f)
+    * pow(clamp((2.5f - length(uv)), 0.0f, 1.0f), 6.0f);
+
+    result += 0.45f * smoothstep(uv.y - 0.1f, uv.y + 0.1f, -0.5f) * 0.9f * step(length(uv), 5.5f)
+    * max(0.0f, (1.4f - length(uv)));
+    uv = uv2;
+
+    uv *= 10.0f;
+    uv = pmod(uv, 4.0f);
+    uv *= rotate(-t * 3.5f);
+    uv *= rotate(length(uv * 5.0f));
+
+    result += smoothstep(uv.y - 0.1f, uv.y + 0.4f, 0.1f) * 0.5f * step(length(uv), 5.5f)
+    * pow(clamp((2.5f - length(uv)), 0.0f, 1.0f), 6.0f);
+
+    result += 0.45f * smoothstep(uv.y - 0.1f, uv.y + 0.1f, -0.5f) * 0.9f * step(length(uv), 5.5f)
+    * max(0.0f, (1.4f - length(uv)));
+
+    result *= step(abs(uv3.x), 0.365);
+    return result;
+}
+
+#endif
+
 void main()
 {
     //#ifdef WEB_GL
@@ -281,15 +386,39 @@ void main()
         */
         albedo = pow(albedo, vec3(GAMMA)); // sRGB to linear space. https://learnopengl.com/Advanced-Lighting/Gamma-Correction
     }
-
     float metallic = metallicRoughnessFactors.x;
     float roughness = metallicRoughnessFactors.y;
     if (useMetallicRoughnessTexture == 1)
     {
-        vec2 mr = texture(metallicRoughnessTexture, v_textureCoord).xy;
-        metallic = mr.x;
-        roughness = mr.y;
+        vec3 mr = texture(metallicRoughnessTexture, v_textureCoord).rgb;
+        metallic = mr.b;
+        roughness = mr.g;
+
+        /*
+        colorOut.rgb = vec3(metallic);
+        colorOut.a = 1.0f;
+        return;
+        */
     }
+
+    #ifdef PORTAL_GUN_COLORED
+    albedo = pow(portalGunColor * 2.0f, vec3(3.0f));
+    #endif
+    #ifdef PORTAL_GUN_TIME
+
+    vec2 timerDir = normalize(v_textureCoord + vec2(0, -1.0f));
+    float angle = atan(-timerDir.x, timerDir.y) / (2.0f * -PI) + 0.5f;
+
+    bool timeLeft = (angle * 10.0f / gunTimer) < 1.0f;
+
+    albedo = timeLeft ? pow(portalGunColor * 2.0f, vec3(3.0f)) : vec3(0.0f);
+
+    if (!timeLeft)
+    {
+        metallic = 0.7f;
+        roughness = 0.2f;
+    }
+    #endif
 
     float ao = 1.;
 
@@ -390,6 +519,29 @@ void main()
     #ifdef TEST
     
     brightColor.rgb += testColor * (sin((v_position.x + v_position.y) * 3. + time * 2.) + 1.);
+    #endif
+    #ifdef PORTAL_GUN_COLORED
+    bool isFront = v_modelPosition.z < -0.2f;
+
+    if (isFront)
+    {
+        float twistFactor = twist((v_modelPosition.xy + fireNoise(v_modelPosition.xy * 30.0f, time * 0.4f) * 0.01f) * 10.f);
+
+        float zPos = clamp(((-v_modelPosition.z - 0.3f)), 0.0f, 1.0f);
+        twistFactor += zPos * 100.0f;
+
+        brightColor.rgb = albedo;
+        brightColor.a = (2.0f + twistFactor * 20.0f) * 0.25f;
+    }
+    #endif
+    #ifdef PORTAL_GUN_TIME
+
+    if (timeLeft)
+    {
+        brightColor.rgb = albedo;
+        brightColor.a = 2.0f;
+    }
+
     #endif
     #endif
 }

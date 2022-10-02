@@ -105,25 +105,31 @@ function create(player)
                 }
             })
 
-            local gunA = createChild(player, "gun")
+            local gunA = createChild(player, "gunA")
             applyTemplate(gunA, "PortalGun", { isA = true })
+            local rot = quat:new()
+            rot.x = 5
+            rot.y = 9
+            rot.z = 0
             setComponents(gunA, {
                 TransformChild {
                     parentEntity = cam,
                     offset = Transform {
-                        position = vec3(0.1, -0.1, -0.05),
+                        position = vec3(0.3, -0.3, -0.4),
+                        rotation = rot
                     },
                     scale = false
                 }
             })
-
-            local gunB = createChild(player, "gun")
+            rot.y = -rot.y
+            local gunB = createChild(player, "gunB")
             applyTemplate(gunB, "PortalGun", { isA = false })
             setComponents(gunB, {
                 TransformChild {
                     parentEntity = cam,
                     offset = Transform {
-                        position = vec3(-0.1, -0.1, -0.05),
+                        position = vec3(-0.3, -0.3, -0.4),
+                        rotation = rot
                     },
                     scale = false
                 }

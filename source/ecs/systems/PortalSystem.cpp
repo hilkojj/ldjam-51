@@ -155,9 +155,14 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
 
         if (const Child *child = room->entities.try_get<Child>(e))
         {
-            if (room->entities.has<PlayerControlled>(child->parent))
+            if (!room->entities.has<LocalPlayer>(child->parent))
             {
-                const vec3 direction = rotate(t.rotation, -mu::Z);
+                return;
+            }
+
+            if (room->camera != nullptr)
+            {
+                const vec3 direction = room->camera->direction;
 
                 room->getPhysics().rayTest(t.position, t.position + direction * 500.0f, [&](entt::entity wallEntity, const vec3 &hitPoint, const vec3 &normal) {
 

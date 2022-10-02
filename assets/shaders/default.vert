@@ -29,6 +29,10 @@ out mat3 v_TBN;
 out float v_fog;
 #endif
 
+#ifdef PORTAL_GUN_COLORED
+out vec3 v_modelPosition;
+#endif
+
 void main()
 {
     #ifdef INSTANCED
@@ -36,6 +40,11 @@ void main()
     mat4 mvp = viewProjection * transform;
 
     #endif
+
+    #ifdef PORTAL_GUN_COLORED
+    v_modelPosition = a_position;
+    #endif
+
 
     gl_Position = mvp * vec4(a_position, 1.0);
 

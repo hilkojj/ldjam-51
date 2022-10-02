@@ -27,7 +27,7 @@ function create(gun, args)
         PortalGun {
             portalName = args.isA and "PortalA" or "PortalB",
             oppositePortalName = args.isA and "PortalB" or "PortalA",
-            leftMB = args.isA,
+            leftMB = not args.isA,
             collideWithMaskBits = masks.BULLET_WALLS,
             oppositePortalMaskBits = args.isA and masks.PORTAL_B or masks.PORTAL_A,
             portalMaskBits = (args.isA and masks.PORTAL_A or masks.PORTAL_B) | masks.SENSOR,
@@ -35,6 +35,56 @@ function create(gun, args)
         },
         PointLight {
             color = vec3(0) -- to reserve a pointlight in the shaders for the portals. The portal will remove/add this pointlight on its creation/destruction respectively.
+        }
+    })
+
+    local timeE = createChild(gun, "time")
+    setComponents(timeE, {
+        Transform(),
+        TransformChild {
+            parentEntity = gun
+        },
+        RenderModel {
+            modelName = "PortalGunTime"
+        },
+        ShadowCaster(),
+        CustomShader {
+            vertexShaderPath = "shaders/default.vert",
+            fragmentShaderPath = "shaders/default.frag",
+            defines = {PORTAL_GUN_TIME = "1"},
+            uniformsVec3 = {portalGunColor = component.PortalGun.getFor(gun).color}
+        },
+    })
+    setUpdateFunction(timeE, 0.0, function()
+        component.CustomShader.getFor(timeE):dirty().uniformsFloat.gunTimer = math.max(0, 10.0 - currentEngine.time)
+    end)
+
+    setComponents(createChild(gun, "colored"), {
+        Transform(),
+        TransformChild {
+            parentEntity = gun
+        },
+        RenderModel {
+            modelName = "PortalGunColored"
+        },
+        ShadowCaster(),
+        CustomShader {
+            vertexShaderPath = "shaders/default.vert",
+            fragmentShaderPath = "shaders/default.frag",
+            defines = {PORTAL_GUN_COLORED = "1"},
+            uniformsVec3 = {portalGunColor = component.PortalGun.getFor(gun).color}
+        },
+    })
+    setComponents(createChild(gun, "light"), {
+        Transform(),
+        TransformChild {
+            parentEntity = gun,
+            offset = Transform {
+                position = vec3(args.isA and -0.5 or 0.5, 0, -1)
+            }
+        },
+        PointLight {
+            color = component.PortalGun.getFor(gun).color * vec3(20.0)
         }
     })
 
