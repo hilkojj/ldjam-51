@@ -14,8 +14,8 @@ GraphicsSettings @not_a_component @json_with_keys:
   bloomThreshold: [float, 4.0f]
   shadows: [bool, true]
   maxArmatureBones: [uint, 64]
-  fogStart: [float, 30]
-  fogEnd: [float, 60]
+  fogStart: [float, 4.0f]
+  fogEnd: [float, 50.0f]
   fogEnabled: [bool, true]
 
   prefilteredReflectionMapResolution: [uint, 256]

@@ -8,6 +8,8 @@
 #include "../../generated/Portal.hpp"
 #include "../../game/Game.h"
 
+#include <glm/gtx/closest_point.hpp>
+
 void PortalSystem::init(EntityEngine *engine)
 {
     EntitySystem::init(engine);
@@ -17,7 +19,10 @@ void PortalSystem::init(EntityEngine *engine)
 
 void PortalSystem::update(double deltaTime, EntityEngine *)
 {
-    room->entities.view<Transform, GhostBody, Portal>().each([&](auto portalAE, const Transform &transformPortalA, const GhostBody &body, const Portal &portalA) {
+    room->entities.view<Transform, GhostBody, Portal>().each([&](auto portalAE, const Transform &transformPortalA, const GhostBody &body, Portal &portalA) {
+
+        portalA.playerTouching = false;
+        portalA.time += deltaTime;
 
         if (body.collider.collisions.empty())
         {
@@ -51,8 +56,22 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
             {
                 continue;
             }
+            RigidBody *rigidBodyVictim = room->entities.try_get<RigidBody>(victim);
+            if (rigidBodyVictim == nullptr)
+            {
+                continue;
+            }
 
             float planeDot = dot(vec4(transformVictim->position, 1.0f), planePortalA);
+
+            if (planePortalA.y < 0.5f)
+            {
+                if (transformVictim->position.y - transformPortalA.position.y < -0.9f)
+                {
+                    // prevent fall through floor when going through portal
+                    continue;
+                }
+            }
 
             bool anyContactPointInFront = false;
             for (vec3 &contactPoint : collision->contactPoints)
@@ -65,6 +84,25 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
             if (!anyContactPointInFront)
             {
                 continue;
+            }
+
+            TouchingPortal &tp = room->entities.get_or_assign<TouchingPortal>(victim);
+            tp.timeSinceTouch = 0.0f;
+            if (dot(vec3(planePortalA), mu::Y) > 0.5f)
+            {
+                rigidBodyVictim->collider.collideWithMaskBits &= ~portalA.letBodyIgnoreMaskWhenOnFloor;
+                tp.ignoredMask |= portalA.letBodyIgnoreMaskWhenOnFloor;
+            }
+            else
+            {
+                rigidBodyVictim->collider.collideWithMaskBits &= ~portalA.letBodyIgnoreMaskWhenOnWall;
+                tp.ignoredMask |= portalA.letBodyIgnoreMaskWhenOnWall;
+            }
+            rigidBodyVictim->collider.bedirt<&Collider::collideWithMaskBits>();
+
+            if (room->entities.has<LocalPlayer>(victim))
+            {
+                portalA.playerTouching = true;
             }
 
             if (planeDot > 0.0f)
@@ -85,17 +123,15 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
                 std::cout << "Teleporting " << (room->getName(victim) ? room->getName(victim) : std::to_string(int(victim))) << " from " << (room->getName(portalAE) ? room->getName(portalAE) : std::to_string(int(portalAE))) << " to " << (room->getName(portalBE) ? room->getName(portalBE) : std::to_string(int(portalBE))) << std::endl;
                 room->entities.assign_or_replace<TeleportedByPortal>(victim).timeSinceTeleport = 0.0f;
 
-                if (RigidBody *rigidBodyVictim = room->entities.try_get<RigidBody>(victim))
-                {
-                    room->getPhysics().setLinearVelocity(
-                        *rigidBodyVictim,
-                        transformDirectionByTeleport(
-                            Room3D::transformFromComponent(transformPortalA),
-                            Room3D::transformFromComponent(transformPortalB),
-                            room->getPhysics().getLinearVelocity(*rigidBodyVictim)
-                        )
-                    );
-                }
+                room->getPhysics().setLinearVelocity(
+                    *rigidBodyVictim,
+                    transformDirectionByTeleport(
+                        Room3D::transformFromComponent(transformPortalA),
+                        Room3D::transformFromComponent(transformPortalB),
+                        room->getPhysics().getLinearVelocity(*rigidBodyVictim)
+                    )
+                    + vec3(getPortalPlane(transformPortalB)) * -3.0f
+                );
             }
         }
     });
@@ -104,23 +140,60 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
         teleportedByPortal.timeSinceTeleport += deltaTime;
     });
 
+    room->entities.view<TouchingPortal, RigidBody>().each([&](TouchingPortal &tp, RigidBody &body) {
+
+        if (tp.timeSinceTouch > 0.0f)
+        {
+            body.collider.collideWithMaskBits |= tp.ignoredMask;
+            body.collider.bedirt<&Collider::collideWithMaskBits>();
+            tp.ignoredMask = 0;
+        }
+        tp.timeSinceTouch += deltaTime;
+    });
+
     room->entities.view<Transform, PortalGun>().each([&](auto e, const Transform &t, const PortalGun &gun) {
 
         if (const Child *child = room->entities.try_get<Child>(e))
         {
             if (room->entities.has<PlayerControlled>(child->parent))
             {
-                if (MouseInput::justPressed(GLFW_MOUSE_BUTTON_LEFT))// && !Game::settings.unlockCamera)
+                if (MouseInput::justPressed(gun.leftMB ? GLFW_MOUSE_BUTTON_LEFT : GLFW_MOUSE_BUTTON_RIGHT) && !Game::settings.unlockCamera)
                 {
-                    vec3 direction = rotate(t.rotation, -mu::Z);
+                    const vec3 direction = rotate(t.rotation, -mu::Z);
+
+                    bool oppositePortalHit = false;
+
+                    room->getPhysics().rayTest(t.position, t.position + direction * 500.0f, [&](entt::entity oppositePortalEntity, const vec3 &hitPoint, const vec3 &normal) {
+
+                        oppositePortalHit = true;
+
+                    }, false, gun.oppositePortalMaskBits);
+
+                    if (oppositePortalHit)
+                    {
+                        room->entities.destroy(room->getByName(gun.oppositePortalName.c_str()));
+                    }
 
                     room->getPhysics().rayTest(t.position, t.position + direction * 500.0f, [&](entt::entity wallEntity, const vec3 &hitPoint, const vec3 &normal) {
 
-                        entt::entity portal = room->getTemplate("Portal").create();
+                        entt::entity oldPortal = room->getByName(gun.portalName.c_str());
+                        if (room->entities.valid(oldPortal))
+                        {
+                            room->entities.destroy(oldPortal);
+                        }
+
+                        auto *portalTemplate = dynamic_cast<LuaEntityTemplate *>(&room->getTemplate("Portal"));
+                        if (portalTemplate == nullptr)
+                        {
+                            return;
+                        }
+                        entt::entity portal = room->entities.create();
+                        portalTemplate->createComponentsWithJsonArguments(portal, json{{"gunE", int(e)}}, false);
                         Transform &portalTransform = room->entities.get_or_assign<Transform>(portal);
-                        portalTransform.position = hitPoint - normal * 0.01f;
+                        portalTransform.position = hitPoint + normal * 0.05f;
                         portalTransform.rotation = quatLookAt(-normal, mu::Y);
 
+                        room->emitEntityEvent(e, portal);
                     }, true, gun.collideWithMaskBits);
                 }
             }

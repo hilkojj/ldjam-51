@@ -24,7 +24,7 @@ function create(levelEntity, args)
             collider = Collider {
                 bounciness = 1,
                 frictionCoefficent = 1,
-                collisionCategoryBits = collisionMasks.STATIC_TERRAIN,
+                collisionCategoryBits = collisionMasks.STATIC_FLOORS,
                 collideWithMaskBits = collisionMasks.DYNAMIC_CHARACTER | collisionMasks.DYNAMIC_PROPS
             }
         },
@@ -45,7 +45,7 @@ function create(levelEntity, args)
             collider = Collider {
                 bounciness = 1,
                 frictionCoefficent = 1,
-                collisionCategoryBits = collisionMasks.STATIC_TERRAIN,
+                collisionCategoryBits = collisionMasks.STATIC_WALLS,
                 collideWithMaskBits = collisionMasks.DYNAMIC_CHARACTER | collisionMasks.DYNAMIC_PROPS
             }
         },
@@ -59,26 +59,6 @@ function create(levelEntity, args)
         ShadowReceiver()
     })
 
-    setComponents(createChild(levelEntity, "WallCollider"), {
-        Transform(),
-        RigidBody {
-            mass = 0,
-            collider = Collider {
-                bounciness = 1,
-                frictionCoefficent = 1,
-                collisionCategoryBits = collisionMasks.STATIC_TERRAIN,
-                collideWithMaskBits = collisionMasks.DYNAMIC_CHARACTER | collisionMasks.DYNAMIC_PROPS
-            }
-        },
-        ConcaveColliderShape {
-            meshName = "Level1Wall"
-        },
-        RenderModel {
-            modelName = "Level1Wall"
-        },
-        ShadowCaster(),
-        ShadowReceiver()
-    })
     setComponents(createChild(levelEntity, "PortalWallCollider"), {
         Transform(),
         RigidBody {

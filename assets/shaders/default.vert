@@ -55,10 +55,11 @@ void main()
     #endif
 
     #ifdef PORTAL_RENDER
+    /*
     #ifndef WEB_GL
     gl_ClipDistance[0] = -dot(worldPosition, clipPlane);
     #endif
+    */
     v_worldPosition = worldPosition;
     #endif
-
 }

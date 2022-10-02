@@ -261,14 +261,14 @@ void dirShadowLightRadiance(DirectionalShadowLight light, vec3 N, vec3 V, vec3 F
 
 void main()
 {
-    #ifdef WEB_GL
+    //#ifdef WEB_GL
     #ifdef PORTAL_RENDER
     if (dot(v_worldPosition, clipPlane) > 0.0f)
     {
         discard;
     }
     #endif
-    #endif
+    //#endif
 
     vec3 albedo = diffuse;
     if (useDiffuseTexture == 1)

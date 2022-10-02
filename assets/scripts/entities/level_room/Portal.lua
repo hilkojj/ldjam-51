@@ -1,30 +1,40 @@
 
-persistenceMode(TEMPLATE | ARGS, {"Transform", "Portal"})
-
 collisionMasks = include("scripts/entities/level_room/_masks")
-
-defaultArgs({
-    name = "TestPortal"
-})
 
 function create(portal, args)
 
-    setName(portal, args.name)
+    local gun = component.PortalGun.getFor(args.gunE)
 
-    component.Transform.getFor(portal)
-    component.Portal.getFor(portal)
+    print(gun.portalName)
+
+    setName(portal, gun.portalName)
+
     setComponents(portal, {
+        Transform(),
+        Portal {
+            linkedPortalName = gun.oppositePortalName,
+
+            letBodyIgnoreMaskWhenOnWall = collisionMasks.STATIC_WALLS,
+            letBodyIgnoreMaskWhenOnFloor = collisionMasks.STATIC_FLOORS,
+
+            color = gun.color
+        },
         GhostBody {
             collider = Collider {
-                collisionCategoryBits = collisionMasks.SENSOR,
+                collisionCategoryBits = gun.portalMaskBits,
                 collideWithMaskBits = collisionMasks.DYNAMIC_CHARACTER | collisionMasks.DYNAMIC_PROPS,
                 registerCollisions = true
             }
         },
         SphereColliderShape {
             radius = 1
+        },
+        PointLight {
+            color = vec3(0)
         }
     })
+
+    component.PointLight.animate(portal, "color", gun.color * vec3(10), 0.3, "circle")
 
     setComponents(createChild(portal, "Camera"), {
         Transform()

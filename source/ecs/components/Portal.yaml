@@ -5,11 +5,29 @@ config:
 
 Portal:
   linkedPortalName: [string, "TestPortal"]
+
+  letBodyIgnoreMaskWhenOnWall: [ int, 0 ]
+  letBodyIgnoreMaskWhenOnFloor: [ int, 0 ]
+
+  color: [vec3, vec3(1.0f)]
+  time: [float, 0.0f]
+
   _cpp_only:
     fbo: [FrameBuffer *, nullptr]
+    playerTouching: [bool, false]
 
 TeleportedByPortal:
   timeSinceTeleport: [float, 0.0f]
 
+TouchingPortal:
+  timeSinceTouch: [float, 0.0f]
+  ignoredMask: [int, 0]
+
 PortalGun:
+  portalName: string
+  oppositePortalName: string
+  leftMB: [bool, true]
   collideWithMaskBits: [int, 0]
+  oppositePortalMaskBits: [int, 0]
+  portalMaskBits: [int, 0]
+  color: [vec3, vec3(1.0f)]

@@ -13,8 +13,8 @@ function create(cam, args)
     setComponents(cam, {
         CameraPerspective {
             fieldOfView = 75,
-            nearClipPlane = .1,
-            farClipPlane = 1000,
+            nearClipPlane = .01,
+            farClipPlane = 100,
             visibilityMask = -1 & ~masks.PLAYER
         }
     })

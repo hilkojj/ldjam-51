@@ -41,7 +41,7 @@ function create(player)
                 bounciness = 0,
                 frictionCoefficent = .1,
                 collisionCategoryBits = masks.DYNAMIC_CHARACTER,
-                collideWithMaskBits = masks.STATIC_TERRAIN | masks.SENSOR,
+                collideWithMaskBits = masks.STATIC_TERRAIN | masks.STATIC_WALLS | masks.STATIC_FLOORS | masks.SENSOR,
                 registerCollisions = true
             }
         },
@@ -59,6 +59,7 @@ function create(player)
     })
 
 
+    --[[
     local dropShadowSun = createChild(player, "drop shadow sun")
     setComponents(dropShadowSun, {
         Transform(),
@@ -78,6 +79,7 @@ function create(player)
             farClipPlane = 16
         }
     })
+    ]]--
 
     local cam = getByName("3rd_person_camera")
     if valid(cam) then
@@ -103,13 +105,25 @@ function create(player)
                 }
             })
 
-            local gun = createChild(player, "gun")
-            applyTemplate(gun, "PortalGun")
-            setComponents(gun, {
+            local gunA = createChild(player, "gun")
+            applyTemplate(gunA, "PortalGun", { isA = true })
+            setComponents(gunA, {
                 TransformChild {
                     parentEntity = cam,
                     offset = Transform {
                         position = vec3(0.1, -0.1, -0.05),
+                    },
+                    scale = false
+                }
+            })
+
+            local gunB = createChild(player, "gun")
+            applyTemplate(gunB, "PortalGun", { isA = false })
+            setComponents(gunB, {
+                TransformChild {
+                    parentEntity = cam,
+                    offset = Transform {
+                        position = vec3(-0.1, -0.1, -0.05),
                     },
                     scale = false
                 }

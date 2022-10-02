@@ -68,8 +68,8 @@ RoomScreen::RoomScreen(Room3D *room, bool showRoomEditor)
         ),
         skyShader(
             "sky shader",
-//            "shaders/fullscreen_quad.vert", "shaders/sky.frag"
-            "shaders/skybox.vert", "shaders/skybox.frag"
+            "shaders/fullscreen_quad.vert", "shaders/sky.frag"
+//            "shaders/skybox.vert", "shaders/skybox.frag"
         ),
 
         portalShader(
@@ -186,8 +186,10 @@ void RoomScreen::render(double deltaTime)
     finalImg.skyShader = &skyShader;
     finalImg.portals = true;
 
+    /*
     if (room->environmentMap.isSet())
         finalImg.skyBox = (irradianceMapAsSkyBox ? room->environmentMap->irradianceMap : room->environmentMap->original).get();
+    */
 
     if (room->entities.valid(room->cameraEntity))
         if (auto *cp = room->entities.try_get<CameraPerspective>(room->cameraEntity))
@@ -277,7 +279,7 @@ void RoomScreen::renderPortalTexture(entt::entity portalE, Portal &portalA, cons
 
     if (portalA.fbo == nullptr)
     {
-        portalA.fbo = new FrameBuffer(gu::width * 0.5f, gu::height * 0.5f);
+        portalA.fbo = new FrameBuffer(gu::width * 0.8f, gu::height * 0.8f);
         portalA.fbo->addDepthBuffer();
         portalA.fbo->addColorTexture(GL_RGBA16F, GL_RGBA, GL_LINEAR, GL_NEAREST, GL_FLOAT);  // normal HDR color
     }
@@ -565,7 +567,7 @@ void RoomScreen::renderRoom(const RenderContext &con)
         portalShader.use();
         glUniform2fv(portalShader.location("screenSize"), 1, &vec2(gu::width, gu::height)[0]);
 
-        room->entities.view<Transform, Portal>().each([&](auto e, Transform &t, Portal &portal) {
+        room->entities.view<Transform, Portal>().each([&](auto e, const Transform &t, const Portal &portal) {
 
             auto transform = Room3D::transformFromComponent(t);
 
@@ -582,6 +584,8 @@ void RoomScreen::renderRoom(const RenderContext &con)
                 dummyTexture.bind(0, portalShader, "portalTexture");
                 glUniform1i(portalShader.location("hasPortalTexture"), 0);
             }
+            glUniform3fv(portalShader.location("portalColor"), 1, &portal.color[0]);
+            glUniform1f(portalShader.location("portalTime"), portal.time);
 
             Mesh::getQuad()->render();
 
