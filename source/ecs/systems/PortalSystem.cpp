@@ -8,6 +8,8 @@
 #include "../../generated/Portal.hpp"
 #include "../../game/Game.h"
 
+#include <generated/LuaScripted.hpp>
+
 void PortalSystem::init(EntityEngine *engine)
 {
     EntitySystem::init(engine);
@@ -17,6 +19,9 @@ void PortalSystem::init(EntityEngine *engine)
 
 void PortalSystem::update(double deltaTime, EntityEngine *)
 {
+    bool playerTeleported = false;
+    entt::entity playerE = entt::null;
+
     room->entities.view<Transform, GhostBody, Portal>().each([&](auto portalAE, const Transform &transformPortalA, const GhostBody &body, Portal &portalA) {
 
         portalA.playerTouching = false;
@@ -130,6 +135,13 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
                     )
                     + vec3(getPortalPlane(transformPortalB)) * -3.0f
                 );
+
+                if (room->entities.has<LocalPlayer>(victim))
+                {
+                    playerTeleported = true;
+                    playerE = victim;
+                }
+                //room->emitEntityEvent(victim, portalA, "TeleportedByPortal");
             }
         }
     });
@@ -213,6 +225,26 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
             gun.canShootSince = 0.0f;
         }
     });
+
+    timePastSinceReplay += deltaTime;
+    room->luaEnvironment["timePastSinceReplay"] = timePastSinceReplay;
+    if (playerTeleported)
+    {
+        InputHistory &playerHistory = room->entities.get_or_assign<InputHistory>(playerE);
+
+        if (playerHistory.timelineSize > 0)
+        {
+            histories.push_back(playerHistory);
+        }
+        playerHistory.timelineSize = 0;
+        playerHistory.timeline.clear();
+
+        replay();
+    }
+    else if (timePastSinceReplay >= 10.0f)
+    {
+        replay();
+    }
 }
 
 vec4 PortalSystem::getPortalPlane(const Transform &transform)
@@ -250,5 +282,40 @@ vec3 PortalSystem::transformDirectionByTeleport(const mat4 &transformPortalAMat,
     mat4 deltaPortalAToPortalB = transformPortalBMat * inverse(transformPortalAMat);
 
     return deltaPortalAToPortalB * vec4(toTeleport, 0.0f);
+}
+
+void PortalSystem::replay()
+{
+    timePastSinceReplay = 0.0f;
+
+    room->entities.view<Portal>().each([&](auto e, auto &) {
+        room->entities.destroy(e);
+    });
+
+    room->entities.view<LuaScripted>(entt::exclude<LocalPlayer>).each([&](auto e, const LuaScripted &luaScripted) {
+        if (luaScripted.usedTemplate != nullptr && luaScripted.usedTemplate->name == "Portie")
+        {
+            room->entities.destroy(e);
+        }
+    });
+
+    room->entities.view<LocalPlayer, Transform, InputHistory>().each([&](auto playerE, Transform &t, InputHistory &history) {
+
+        if (history.timelineSize > 0)
+        {
+            t.copyFieldsFrom(history.timeline.front().transform);
+
+            history.timelineSize = 0;
+            history.timeline.clear();
+        }
+
+    });
+
+    for (const InputHistory &history : histories)
+    {
+        entt::entity clone = room->getTemplate("Portie").create();
+        room->entities.assign_or_replace<InputHistory>(clone, history);
+        room->entities.assign_or_replace<Transform>(clone, history.timeline.front().transform);
+    }
 }
 

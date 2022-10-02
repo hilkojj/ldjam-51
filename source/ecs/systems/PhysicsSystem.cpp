@@ -491,6 +491,32 @@ void PhysicsSystem::update(double deltaTime, EntityEngine* room)
             onConcaveAdded(room->entities, e);
         }
     });
+
+    room->entities.view<RotationOffsetIsVelocity, TransformChild>().each([&](auto e, const RotationOffsetIsVelocity &rv, TransformChild &child) {
+
+        if (!room->entities.valid(rv.velocityOf))
+        {
+            return;
+        }
+        if (RigidBody *rb = room->entities.try_get<RigidBody>(rv.velocityOf))
+        {
+            if (const Transform *t = room->entities.try_get<Transform>(rv.velocityOf))
+            {
+                //mat4 tMat = static_cast<Room3D *>(room)->transformFromComponent(*t);
+
+                vec3 localVel = vec4(getLinearVelocity(*rb), 0.0f);
+                localVel.y = 0.0f;
+
+                if (length(localVel) > 0.1)
+                {
+                    localVel = normalize(localVel);
+                    child.offset.rotation = glm::slerp(child.offset.rotation, quatLookAt(localVel, mu::Y), float(deltaTime) * 10.0f);
+
+                }
+            }
+        }
+
+    });
     
     {
         gu::profiler::Zone z("bullet");

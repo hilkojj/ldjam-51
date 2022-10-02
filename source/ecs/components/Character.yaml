@@ -1,11 +1,26 @@
+config:
+  hpp_incl:
+    - Transform.hpp
+
+MovementInput:
+  walkDirInput: [vec2, false]
+  jumpInput: [bool, false]
+
+  #not actually input, but just for the history:
+  transform: Transform
+  headTransform: Transform
+
+InputHistory:
+  timeline: std::list<MovementInput>
+  timelineSize: [int, 0]
+  popsSkipped: [int, 0]
+  maxTimelineSize: [int, 600]
 
 CharacterMovement:
   walkSpeed: [float, 8]
   jumpForce: [float, 1000]
   fallingForce: [float, 2000]
 
-  walkDirInput: vec2
-  jumpInput: bool
   inputInCameraSpace: bool
 
   # will be set, kinda readonly:

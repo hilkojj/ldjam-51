@@ -269,7 +269,7 @@ void dirShadowLightRadiance(DirectionalShadowLight light, vec3 N, vec3 V, vec3 F
 
 // --------------------------------------------
 
-#if PORTAL_GUN_COLORED
+#ifdef PORTAL_GUN_COLORED
 
 vec2 hash(vec2 p)
 {
@@ -409,7 +409,7 @@ void main()
     vec2 timerDir = normalize(v_textureCoord + vec2(0, -1.0f));
     float angle = atan(-timerDir.x, timerDir.y) / (2.0f * -PI) + 0.5f;
 
-    bool timeLeft = (angle * 10.0f / gunTimer) < 1.0f;
+    bool timeLeft = (angle * 10.0f) > gunTimer;
 
     albedo = timeLeft ? pow(portalGunColor * 2.0f, vec3(3.0f)) : vec3(0.0f);
 

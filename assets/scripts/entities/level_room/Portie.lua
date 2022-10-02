@@ -5,16 +5,20 @@ loadRiggedModels("assets/models/cubeman.glb", false)
 loadColliderMeshes("assets/models/test_convex_colliders.obj", true)
 loadColliderMeshes("assets/models/test_concave_colliders.obj", false)
 
-function create(player)
-    setName(player, "player")
+defaultArgs({
+    isLocalPlayer = false
+})
 
-    setComponents(player, {
+function create(portie, args)
+    setName(portie, "player")
+
+    setComponents(portie, {
         Transform {
             position = vec3(0, 3, 0)
         },
         RenderModel {
-            modelName = "SmallMan",
-            visibilityMask = masks.PLAYER
+            modelName = "Portie",
+            visibilityMask = args.isLocalPlayer and masks.PLAYER or -1
         },
         --[[
         CustomShader {
@@ -54,10 +58,41 @@ function create(player)
         },
         CharacterMovement {
             --inputInCameraSpace = true
-        }
+        },
+        MovementInput(),
         --Inspecting()
     })
+    component.InputHistory.getFor(portie)
 
+    local wheel = createChild(portie, "wheel")
+    setComponents(wheel, {
+        Transform (),
+        TransformChild {
+            parentEntity = portie,
+            rotation = false
+        },
+        RotationOffsetIsVelocity {
+            velocityOf = portie
+        },
+        RenderModel {
+            modelName = "PortieWheel",
+            visibilityMask = args.isLocalPlayer and masks.PLAYER or -1
+        },
+        ShadowCaster(),
+    })
+
+    local eye = createChild(portie, "eye")
+    setComponents(eye, {
+        Transform (),
+        TransformChild {
+            parentEntity = portie,
+        },
+        RenderModel {
+            modelName = "PortieEye",
+            visibilityMask = args.isLocalPlayer and masks.PLAYER or -1
+        },
+        ShadowCaster(),
+    })
 
     --[[
     local dropShadowSun = createChild(player, "drop shadow sun")
@@ -81,108 +116,112 @@ function create(player)
     })
     ]]--
 
-    local cam = getByName("3rd_person_camera")
-    if valid(cam) then
-        setComponents(cam, {
-            ThirdPersonFollowing {
-                target = player,
-                visibilityRayMask = masks.STATIC_TERRAIN
-            }
-        })
-    else
-        cam = getByName("1st_person_camera")
+    if args.isLocalPlayer then
+
+        local cam = getByName("3rd_person_camera")
         if valid(cam) then
             setComponents(cam, {
-                FirstPersonCamera {
-                    target = player
-                },
-                TransformChild {
-                    parentEntity = player,
-                    offset = Transform {
-                        position = vec3(0, 0.75, 0),
-                    },
-                    scale = false
+                ThirdPersonFollowing {
+                    target = portie,
+                    visibilityRayMask = masks.STATIC_TERRAIN
                 }
             })
+        else
+            cam = getByName("1st_person_camera")
+            if valid(cam) then
+                setComponents(cam, {
+                    FirstPersonCamera {
+                        target = portie
+                    },
+                    TransformChild {
+                        parentEntity = portie,
+                        offset = Transform {
+                            position = vec3(0, 0.75, 0),
+                        },
+                        scale = false
+                    }
+                })
 
-            local gunA = createChild(player, "gunA")
-            applyTemplate(gunA, "PortalGun", { isA = true })
-            local rot = quat:new()
-            rot.x = 5
-            rot.y = 9
-            rot.z = 0
-            setComponents(gunA, {
+                local gunA = createChild(portie, "gunA")
+                applyTemplate(gunA, "PortalGun", { isA = true, dummy = false })
+                local rot = quat:new()
+                rot.x = 5
+                rot.y = 9
+                rot.z = 0
+                setComponents(gunA, {
+                    TransformChild {
+                        parentEntity = cam,
+                        offset = Transform {
+                            position = vec3(0.3, -0.3, -0.4),
+                            rotation = rot
+                        },
+                        scale = false
+                    }
+                })
+                rot.y = -rot.y
+                local gunB = createChild(portie, "gunB")
+                applyTemplate(gunB, "PortalGun", { isA = false, dummy = false })
+                setComponents(gunB, {
+                    TransformChild {
+                        parentEntity = cam,
+                        offset = Transform {
+                            position = vec3(-0.3, -0.3, -0.4),
+                            rotation = rot
+                        },
+                        scale = false
+                    }
+                })
+            end
+        end
+
+        local sun = getByName("sun")
+        if valid(sun) then
+            local sunRot = quat:new()
+            sunRot.x = 21
+            sunRot.y = -21
+            sunRot.z = 0
+
+            setComponents(sun, {
                 TransformChild {
-                    parentEntity = cam,
+                    parentEntity = portie,
+                    offsetInWorldSpace = true,
+                    position = true,
+                    rotation = false,
+                    scale = false,
                     offset = Transform {
-                        position = vec3(0.3, -0.3, -0.4),
-                        rotation = rot
-                    },
-                    scale = false
-                }
-            })
-            rot.y = -rot.y
-            local gunB = createChild(player, "gunB")
-            applyTemplate(gunB, "PortalGun", { isA = false })
-            setComponents(gunB, {
-                TransformChild {
-                    parentEntity = cam,
-                    offset = Transform {
-                        position = vec3(-0.3, -0.3, -0.4),
-                        rotation = rot
-                    },
-                    scale = false
+                        position = vec3(-67, 500, 179),
+                        rotation = sunRot
+                    }
                 }
             })
         end
-    end
 
-    local sun = getByName("sun")
-    if valid(sun) then
-        local sunRot = quat:new()
-        sunRot.x = 21
-        sunRot.y = -21
-        sunRot.z = 0
+    else -- isLocalPlayer (is false here:)
 
-        setComponents(sun, {
+        local decoGunA = createChild(portie, "decoGunA")
+        applyTemplate(decoGunA, "PortalGun", { isA = true, dummy = true })
+        setComponents(decoGunA, {
             TransformChild {
-                parentEntity = player,
-                offsetInWorldSpace = true,
-                position = true,
-                rotation = false,
-                scale = false,
+                parentEntity = portie,
                 offset = Transform {
-                    position = vec3(-67, 500, 179),
-                    rotation = sunRot
-                }
+                    position = vec3(0.5, 0.16, -0.5),
+                    scale = vec3(2.5)
+                },
+                scale = false
             }
         })
-    end
-
-    onEntityEvent(player, "AnimationFinished", function(anim, unsub)
-        print(anim.name.." has finished playing! Play it one more time but with less influence..")
-        local anim = component.Rigged.getFor(player).playingAnimations[1]
-        anim.loop = false
-        anim.influence = .5
-        unsub()
-
-        component.Rigged.getFor(player).playingAnimations:add(PlayAnimation {
-            name = "headanim",
-            influence = 1.
+        local decoGunB = createChild(portie, "decoGunB")
+        applyTemplate(decoGunB, "PortalGun", { isA = false, dummy = true })
+        setComponents(decoGunB, {
+            TransformChild {
+                parentEntity = portie,
+                offset = Transform {
+                    position = vec3(-0.5, 0.16, -0.5),
+                    scale = vec3(2.5)
+                },
+                scale = false
+            }
         })
-        component.RigidBody.getFor(player):dirty().gravity = vec3(0, -10, 0)
-    end)
 
-    listenToGamepadButton(player, 0, gameSettings.gamepadInput.test, "test")
-    onEntityEvent(player, "test_pressed", function()
-        print("epic")
-    end)
-
-    onEntityEvent(player, "Collision", function (col)
-
-        if col.otherCategoryBits & masks.STATIC_TERRAIN ~= 0 then
-            print("player hit: "..(getName(col.otherEntity) or col.otherEntity))
-            print(col.impact)
-        end
-    end)
+    end -- isLocalPlayer
 end

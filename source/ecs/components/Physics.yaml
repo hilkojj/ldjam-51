@@ -9,6 +9,9 @@ config:
     - btConvexHullShape
     - btConcaveShape
 
+RotationOffsetIsVelocity:
+  velocityOf: entt::entity
+
 Collision @not_a_component:
   otherEntity: entt::entity
   otherCategoryBits: int

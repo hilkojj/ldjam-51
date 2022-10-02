@@ -11,7 +11,7 @@ void CharacterMovementSystem::init(EntityEngine *engine)
 {
     room = dynamic_cast<Room3D *>(engine);
     if (!room) throw gu_err("engine is not a room");
-    //updateFrequency = 60;
+    updateFrequency = 60;
 }
 
 void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
@@ -19,18 +19,66 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
     assert(room);
     float dT(deltaTime);
 
-    room->entities.view<CharacterMovement, LocalPlayer>().each([&](auto e, CharacterMovement &cm, auto) {
+    room->entities.view<MovementInput, LocalPlayer>().each([&](auto e, MovementInput &input, auto) {
 
-        cm.walkDirInput.y = KeyInput::pressed(Game::settings.keyInput.walkForwards) - KeyInput::pressed(Game::settings.keyInput.walkBackwards);
-        cm.walkDirInput.x = KeyInput::pressed(Game::settings.keyInput.walkRight) - KeyInput::pressed(Game::settings.keyInput.walkLeft);
+        input.walkDirInput.y = KeyInput::pressed(Game::settings.keyInput.walkForwards) - KeyInput::pressed(Game::settings.keyInput.walkBackwards);
+        input.walkDirInput.x = KeyInput::pressed(Game::settings.keyInput.walkRight) - KeyInput::pressed(Game::settings.keyInput.walkLeft);
 
-        cm.walkDirInput.x += GamepadInput::getAxis(0, Game::settings.gamepadInput.walkX);
-        cm.walkDirInput.y -= GamepadInput::getAxis(0, Game::settings.gamepadInput.walkY);
+        input.walkDirInput.x += GamepadInput::getAxis(0, Game::settings.gamepadInput.walkX);
+        input.walkDirInput.y -= GamepadInput::getAxis(0, Game::settings.gamepadInput.walkY);
 
-        cm.jumpInput = KeyInput::pressed(Game::settings.keyInput.jump) || GamepadInput::pressed(0, Game::settings.gamepadInput.jump);
+        input.jumpInput = KeyInput::pressed(Game::settings.keyInput.jump) || GamepadInput::pressed(0, Game::settings.gamepadInput.jump);
     });
 
-    room->entities.view<CharacterMovement, Transform, RigidBody>().each([&](auto e, CharacterMovement &cm, Transform &t, RigidBody &rb) {
+    room->entities.view<Transform, MovementInput, InputHistory>().each([&](auto e, Transform &t, MovementInput &input, InputHistory &history) {
+
+        if (room->entities.has<LocalPlayer>(e))
+        {
+            // capture:
+            history.timeline.push_back(input);
+            history.timeline.back().transform = t;
+            if (room->entities.valid(room->cameraEntity))
+            {
+                if (const TransformChild *camT = room->entities.try_get<TransformChild>(room->cameraEntity))
+                {
+                    history.timeline.back().headTransform = camT->offset;
+                }
+            }
+            history.timelineSize++;
+            if (history.timelineSize > history.maxTimelineSize)
+            {
+                history.timeline.pop_front();
+            }
+        }
+        else
+        {
+            if (history.timeline.empty())
+            {
+                room->entities.destroy(e);
+                return;
+            }
+            // playback:
+            input = history.timeline.front();
+            t.rotation = input.transform.rotation;
+            room->entities.get_or_assign<TransformChild>(room->getChildByName(e, "eye")).offset = input.headTransform;
+            room->entities.get_or_assign<TransformChild>(room->getChildByName(e, "decoGunA")).offset.rotation = input.headTransform.rotation;
+            room->entities.get_or_assign<TransformChild>(room->getChildByName(e, "decoGunB")).offset.rotation = input.headTransform.rotation;
+
+            int missingFrames = history.maxTimelineSize - history.timelineSize;
+
+            if (history.popsSkipped < missingFrames)
+            {
+                history.popsSkipped++;
+                t.copyFieldsFrom(input.transform);// prevent long jump press from actually causing jump
+            }
+            else
+            {
+                history.timeline.pop_front();
+            }
+        }
+    });
+
+    room->entities.view<CharacterMovement, MovementInput, Transform, RigidBody>().each([&](auto e, CharacterMovement &cm, const MovementInput &input, Transform &t, RigidBody &rb) {
 
         vec3 oldForward = rotate(t.rotation, -mu::Z);  // based on camera.cpp // todo: normalize?
         vec3 oldRight = rotate(t.rotation, mu::X);
@@ -123,7 +171,7 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
 
         //if (cm.onGround)
         {
-            if (cm.onGround && cm.jumpInput && !cm.jumpStarted)
+            if (cm.onGround && input.jumpInput && !cm.jumpStarted)
             {
                 physics.applyForce(rb, up * cm.jumpForce);
                 cm.jumpStarted = true;
@@ -134,8 +182,8 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
 
             vec3 currVerticalVel = localToWorld * vec4(0, currVelLocal.y, 0, 0);
 
-            vec3 velocity = forward * min(1.f, (cm.walkDirInput.y)) * cm.walkSpeed + currVerticalVel;
-            velocity += oldRight * min(1.f, (cm.walkDirInput.x)) * cm.walkSpeed;
+            vec3 velocity = forward * min(1.f, (input.walkDirInput.y)) * cm.walkSpeed + currVerticalVel;
+            velocity += oldRight * min(1.f, (input.walkDirInput.x)) * cm.walkSpeed;
 
             velocity = mix(currVelocity, velocity, min(1.f, dT * 10.f + justLanded));
             physics.setLinearVelocity(rb, velocity);
@@ -147,7 +195,7 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
             {
                 cm.jumpDescend = true;
             }
-            if (!cm.jumpInput)
+            if (!input.jumpInput)
             {
                 cm.holdingJumpEnded = true;
             }
@@ -162,116 +210,5 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
         float rotateAmount = min(1.f, abs(cm.walkDirInput.x) * 2.f);
         t.rotation = rotate(t.rotation, cm.walkDirInput.x * dT * -2.f * rotateAmount, mu::Y);
          */
-    });
-
-    room->entities.view<Transform, ThirdPersonFollowing>().each([&](auto e, Transform &t, ThirdPersonFollowing &following) {
-
-        if (!room->entities.valid(following.target) || !room->entities.has<Transform>(following.target))
-            return;
-
-        auto &targetTrans = room->entities.get<Transform>(following.target);
-
-        // target's space:
-        {
-            auto targetToWorld = Room3D::transformFromComponent(targetTrans);   // todo remove scale, if scale is used for animations?
-            auto worldToTarget = inverse(targetToWorld);
-
-            vec3 targetForwardWorldSpace = targetToWorld * vec4(-mu::Z, 0);
-            vec3 targetUpWorldSpace = targetToWorld * vec4(mu::Y, 0);
-            vec3 camOffsetDir = vec3(-targetForwardWorldSpace.x, 0, -targetForwardWorldSpace.z);
-            auto camOffsetLen = length(camOffsetDir);
-            if (camOffsetLen > 0)
-            {
-                static const float MIN_OFFSET_LEN = .9;
-
-                if (camOffsetLen < MIN_OFFSET_LEN)
-                {
-                    camOffsetDir += targetUpWorldSpace * 2.f * (1.f - (camOffsetLen / MIN_OFFSET_LEN));
-                    camOffsetLen = length(camOffsetDir);
-                }
-
-                camOffsetDir /= camOffsetLen;
-
-                //vec3 camOffsetDirTargetSpace = worldToTarget * vec4(camOffsetDir, 0.f);
-
-                vec3 currentPos = t.position;//worldToTarget * vec4(t.position, 1);
-                vec3 newPos = targetTrans.position + camOffsetDir * following.backwardsDistance + targetUpWorldSpace * following.upwardsDistance;
-
-                auto currCamTargetDiff = targetTrans.position - t.position;
-                auto currCamTargetDist = length(currCamTargetDiff);
-
-                static const float SMOOTH_MIN_MAX = 4;
-
-                float changeSpeedMultiplier = 1.f - min(1.f, max(0.f, (currCamTargetDist - following.minDistance) / SMOOTH_MIN_MAX));
-                
-                changeSpeedMultiplier += Interpolation::powIn(min(1.f, max(0.f, (currCamTargetDist - (following.maxDistance - SMOOTH_MIN_MAX)) / SMOOTH_MIN_MAX)), 2);
-                changeSpeedMultiplier = min(1.f, changeSpeedMultiplier);
-
-                /*
-                auto &physics = room->getPhysics();
-                physics.rayTest(targetTrans.position, t.position, [&](auto, const vec3 &hitPoint, const vec3 &normal) {
-
-
-                }, true, following.visibilityRayMask);
-                */
-
-                vec3 interpolatedPos = mix(currentPos, newPos, min(1.f, dT * 3.f * changeSpeedMultiplier));
-                t.position = interpolatedPos;//targetToWorld * vec4(interpolatedPos, 1);
-            }
-
-
-            
-        }
-
-        auto camTargetDiff = targetTrans.position - t.position;
-        auto camTargetDist = length(camTargetDiff);
-
-        if (camTargetDist != 0)
-        {
-            auto camTargetDir = camTargetDiff / camTargetDist;
-            t.rotation = slerp(t.rotation, quatLookAt(camTargetDir, mu::Y), dT * 20.f);
-        }
-    });
-
-    if (Game::settings.unlockCamera)
-    {
-        return;
-    }
-
-    room->entities.view<TransformChild, FirstPersonCamera>().each([&](auto e, TransformChild &t, FirstPersonCamera &firstPerson) {
-
-        if (!room->entities.valid(firstPerson.target))
-        {
-            return;
-        }
-
-        if (!Game::settings.unlockCamera)
-        {
-            MouseInput::setLockedMode(true);
-            firstPerson.lockedCamera = true;
-        }
-
-        Transform *playerTransform = room->entities.try_get<Transform>(firstPerson.target);
-        if (playerTransform == nullptr)
-        {
-            return;
-        }
-
-        /*
-        mat4 playerTransformMat = room->transformFromComponent(*playerTransform);
-        vec3 right = playerTransformMat * vec4(1, 0, 0, 0);
-         */
-
-        if (gu::width <= 0 || gu::height <= 0)
-        {
-            return;
-        }
-
-        t.offset.rotation = rotate(t.offset.rotation,
-                                float(MouseInput::deltaMouseY * mu::DEGREES_TO_RAD) * -Game::settings.firstPersonMouseSensitivity * 0.1f,
-                                mu::X);
-        playerTransform->rotation = rotate(playerTransform->rotation,
-                                float(MouseInput::deltaMouseX * mu::DEGREES_TO_RAD) * -Game::settings.firstPersonMouseSensitivity * 0.1f,
-                                mu::Y);
     });
 }

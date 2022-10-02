@@ -635,6 +635,11 @@ void RoomScreen::renderRoom(const RenderContext &con)
 
             for (auto e : entities)
             {
+                if (!room->entities.valid(e))
+                {
+                    continue;
+                }
+
                 Transform *t = room->entities.try_get<Transform>(e);
                 RenderModel *rm = room->entities.try_get<RenderModel>(e);
                 

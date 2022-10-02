@@ -4,6 +4,7 @@
 
 #include <ecs/systems/EntitySystem.h>
 #include "../../level/room/Room3D.h"
+#include "../../generated/Character.hpp"
 
 class PortalSystem : public EntitySystem
 {
@@ -22,6 +23,14 @@ class PortalSystem : public EntitySystem
     void init(EntityEngine *) override;
 
     void update(double portalAE, EntityEngine *) override;
+
+  private:
+
+    float timePastSinceReplay = 0.0f;
+
+    std::vector<InputHistory> histories;
+
+    void replay();
 
 };
 
