@@ -59,6 +59,14 @@ function create(levelEntity, args)
         ShadowReceiver()
     })
 
+    setComponents(createChild(levelEntity, "Cables"), {
+        Transform(),
+        RenderModel {
+            modelName = args.name.."Cables"
+        },
+        ShadowCaster(),
+    })
+
     setComponents(createChild(levelEntity, "PortalWallCollider"), {
         Transform(),
         RigidBody {

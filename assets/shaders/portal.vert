@@ -7,5 +7,5 @@ out vec2 v_textureCoord;
 void main()
 {
     v_textureCoord = a_position.xy;
-    gl_Position = mvp * vec4(a_position + vec3(0.0f, 0.0f, -0.1f), 1.0);
+    gl_Position = mvp * vec4(a_position + vec3(0.0f, 0.0f, -0.075f), 1.0);
 }

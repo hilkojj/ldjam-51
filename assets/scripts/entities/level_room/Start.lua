@@ -17,7 +17,7 @@ function create(e)
                 bounciness = 1,
                 frictionCoefficent = 1,
                 collisionCategoryBits = collisionMasks.STATIC_TERRAIN,
-                collideWithMaskBits = collisionMasks.DYNAMIC_PROPS | collisionMasks.DYNAMIC_CHARACTER,
+                collideWithMaskBits = collisionMasks.DYNAMIC_CHARACTER,
                 registerCollisions = true
             },
         },

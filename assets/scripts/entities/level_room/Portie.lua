@@ -41,7 +41,7 @@ function create(portie, args)
                 bounciness = 0,
                 frictionCoefficent = .1,
                 collisionCategoryBits = masks.DYNAMIC_CHARACTER,
-                collideWithMaskBits = masks.STATIC_TERRAIN | masks.STATIC_WALLS | masks.STATIC_FLOORS | masks.SENSOR,
+                collideWithMaskBits = masks.STATIC_TERRAIN | masks.STATIC_WALLS | masks.STATIC_FLOORS | masks.SENSOR | masks.DYNAMIC_PROPS,
                 registerCollisions = true
             }
         },

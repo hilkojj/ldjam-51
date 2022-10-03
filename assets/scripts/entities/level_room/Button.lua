@@ -4,13 +4,14 @@ persistenceMode(TEMPLATE | ARGS, {"Transform"})
 collisionMasks = include("scripts/entities/level_room/_masks")
 
 defaultArgs({
+    name = "Button",
     activateFunction = "_",
     deactivateFunction = "_",
 })
 
 function create(e, args)
 
-    setName(e, "Button")
+    setName(e, args.name)
 
     setComponents(e, {
         RenderModel {
@@ -27,7 +28,7 @@ function create(e, args)
             },
         },
         BoxColliderShape {
-            halfExtents = vec3(0.43, 0.1, 0.43)
+            halfExtents = vec3(0.5, 0.05, 0.5)
         },
         ShadowReceiver(),
 
