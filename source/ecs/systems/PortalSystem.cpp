@@ -233,7 +233,7 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
                         {
                             portalTransform.rotation = quatLookAt(-normal, mu::Y);
                         }
-                        room->emitEntityEvent(e, portal);
+                        room->emitEntityEvent(e, portal, "Portal");
                     }
                 }, true, gun.collideWithMaskBits);
             }

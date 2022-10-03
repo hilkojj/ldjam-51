@@ -58,13 +58,7 @@ function create(e, args)
             local child = createChild(e, "instance "..i)
 
             applyTemplate(child, args.instanceTemplate)
-            setComponents(child, {
-
-                Transform {
-                    position = component.Transform.getFor(e).position - vec3(0, 1, 0)
-                },
-
-            })
+            component.Transform.getFor(child).position = component.Transform.getFor(e).position - vec3(0, 1, 0)
 
             component.InstancedRendering.getFor(e):dirty().transformEntities:add(child)
 

@@ -4,7 +4,7 @@ persistenceMode(TEMPLATE | ARGS, {"Transform"})
 collisionMasks = include("scripts/entities/level_room/_masks")
 
 defaultArgs({
-    name = "Bridge"
+    name = "Bridge",
 })
 
 function getDefaultRot()

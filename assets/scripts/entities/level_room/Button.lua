@@ -7,6 +7,7 @@ defaultArgs({
     name = "Button",
     activateFunction = "_",
     deactivateFunction = "_",
+    stayPressed = false
 })
 
 function create(e, args)
@@ -79,14 +80,17 @@ function create(e, args)
         end
     end)
 
-    onEntityEvent(e, "CollisionEnded", function (col)
+    if not args.stayPressed then
 
-        component.Transform.animate(movingPart, "position", buttonPosition, 0.1, "pow2In")
-        component.PointLight.animate(light, "color", vec3(0), 0.1, "pow2Out")
+        onEntityEvent(e, "CollisionEnded", function (col)
 
-        if args.deactivateFunction ~= nil and currentEngine[args.deactivateFunction] ~= nil then
-            currentEngine[args.deactivateFunction](col)
-        end
-    end)
+            component.Transform.animate(movingPart, "position", buttonPosition, 0.1, "pow2In")
+            component.PointLight.animate(light, "color", vec3(0), 0.1, "pow2Out")
+
+            if args.deactivateFunction ~= nil and currentEngine[args.deactivateFunction] ~= nil then
+                currentEngine[args.deactivateFunction](col)
+            end
+        end)
+    end
 
 end

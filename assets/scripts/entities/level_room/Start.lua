@@ -35,7 +35,6 @@ function create(e)
             print("Player left start!")
         end
 
-        currentEngine["startPortalTimer"] = true
     end)
 
 end

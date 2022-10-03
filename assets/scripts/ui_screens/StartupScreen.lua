@@ -17,12 +17,12 @@ onEvent("BeforeDelete", function()
     print("startup screen done..")
 end)
 
-loadOrCreateLevel("assets/levels/level3.lvl")
+loadOrCreateLevel("assets/levels/title_screen.lvl")
 
 function startLevel()
     closeActiveScreen()
-    _G.levelToLoad = startupArgs["--level"] or "assets/levels/level3.lvl"
+    _G.levelToLoad = startupArgs["--level"] or "assets/levels/level0.lvl"
     openScreen("scripts/ui_screens/LevelScreen")
 end
---currentEngine.onClick = startLevel
+currentEngine.onClick = startLevel
 

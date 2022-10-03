@@ -96,6 +96,7 @@ function create(gun, args)
 
     onEntityEvent(gun, "Portal", function(portal)
 
+        currentEngine["startPortalTimer"] = true
     end)
 
 end
