@@ -17,8 +17,8 @@ InputHistory:
   maxTimelineSize: [int, 600]
 
 CharacterMovement:
-  walkSpeed: [float, 8]
-  jumpForce: [float, 1000]
+  walkSpeed: [float, 6]
+  jumpForce: [float, 800]
   fallingForce: [float, 2000]
 
   inputInCameraSpace: bool

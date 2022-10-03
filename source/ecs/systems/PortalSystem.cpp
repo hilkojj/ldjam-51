@@ -15,6 +15,7 @@ void PortalSystem::init(EntityEngine *engine)
     EntitySystem::init(engine);
     room = dynamic_cast<Room3D *>(engine);
     if (!room) throw gu_err("engine is not a room");
+    //updateFrequency = 60; TODO: clicking does not work with. See limits set by macro in Level.h
 }
 
 void PortalSystem::update(double deltaTime, EntityEngine *)
@@ -174,19 +175,30 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
 
             if (room->camera != nullptr)
             {
+                const vec3 rayPos = room->camera->position;
                 const vec3 direction = room->camera->direction;
 
-                room->getPhysics().rayTest(t.position, t.position + direction * 500.0f, [&](entt::entity wallEntity, const vec3 &hitPoint, const vec3 &normal) {
+                room->getPhysics().rayTest(rayPos, rayPos + direction * 500.0f, [&](entt::entity wallEntity, const vec3 &hitPoint, const vec3 &normal) {
 
                     gun.canShootSince += deltaTime;
                     canShoot = true;
 
                     if (MouseInput::justPressed(gun.leftMB ? GLFW_MOUSE_BUTTON_LEFT : GLFW_MOUSE_BUTTON_RIGHT) && !Game::settings.unlockCamera)
                     {
+                        bool retiredPortalHit = false;
+
+                        room->getPhysics().rayTest(rayPos, rayPos + direction * 500.0f, [&](entt::entity retiredPortalE, const vec3 &, const vec3 &) {
+
+                            retiredPortalHit = true;
+                        }, false, gun.retiredMask);
+                        if (retiredPortalHit)
+                        {
+                            return;
+                        }
 
                         bool oppositePortalHit = false;
 
-                        room->getPhysics().rayTest(t.position, t.position + direction * 500.0f, [&](entt::entity oppositePortalEntity, const vec3 &hitPoint, const vec3 &normal) {
+                        room->getPhysics().rayTest(rayPos, rayPos + direction * 500.0f, [&](entt::entity oppositePortalEntity, const vec3 &hitPoint, const vec3 &normal) {
 
                             oppositePortalHit = true;
 
@@ -226,7 +238,10 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
         }
     });
 
-    timePastSinceReplay += deltaTime;
+    if (room->luaEnvironment["startPortalTimer"].valid())
+    {
+        timePastSinceReplay += deltaTime;
+    }
     room->luaEnvironment["timePastSinceReplay"] = timePastSinceReplay;
     if (playerTeleported)
     {
@@ -243,6 +258,16 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
     }
     else if (timePastSinceReplay >= 10.0f)
     {
+        room->entities.view<Portal>().each([&](auto e, const Portal &portal) {
+            if (room->getName(e))
+            {
+                if (!stringStartsWith(room->getName(e), "old_"))
+                {
+                    room->entities.destroy(e);
+                }
+            }
+        });
+
         replay();
     }
 }
@@ -288,8 +313,23 @@ void PortalSystem::replay()
 {
     timePastSinceReplay = 0.0f;
 
-    room->entities.view<Portal>().each([&](auto e, auto &) {
-        room->entities.destroy(e);
+    room->entities.view<Portal>().each([&](auto e, Portal &portal) {
+        room->setName(e, room->getName(e) ? (std::string("old_") + room->getName(e)).c_str() : nullptr);
+        portal.linkedPortalName = "";
+        delete portal.fbo;
+        portal.fbo = nullptr;
+        // TODO: ALWAYS delete fbo upon removal of portal.
+
+        if (GhostBody *gb = room->entities.try_get<GhostBody>(e))
+        {
+            gb->collider.collisionCategoryBits = portal.retiredMask;
+            gb->collider.bedirt<&Collider::collisionCategoryBits>();
+        }
+        if (SphereColliderShape *scs = room->entities.try_get<SphereColliderShape>(e))
+        {
+            scs->radius = 1.5f;
+            scs->bedirt<&SphereColliderShape::radius>();
+        }
     });
 
     room->entities.view<LuaScripted>(entt::exclude<LocalPlayer>).each([&](auto e, const LuaScripted &luaScripted) {

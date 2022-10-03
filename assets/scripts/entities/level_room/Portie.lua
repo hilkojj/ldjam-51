@@ -1,9 +1,7 @@
 
 masks = include("scripts/entities/level_room/_masks")
 
-loadRiggedModels("assets/models/cubeman.glb", false)
-loadColliderMeshes("assets/models/test_convex_colliders.obj", true)
-loadColliderMeshes("assets/models/test_concave_colliders.obj", false)
+loadModels("assets/models/cubeman.glb", false)
 
 defaultArgs({
     isLocalPlayer = false
@@ -86,6 +84,9 @@ function create(portie, args)
         Transform (),
         TransformChild {
             parentEntity = portie,
+            offset = Transform {
+                position = vec3(0, 0.7, 0)
+            }
         },
         RenderModel {
             modelName = "PortieEye",

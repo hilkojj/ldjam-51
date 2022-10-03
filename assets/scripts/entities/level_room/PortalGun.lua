@@ -32,6 +32,7 @@ function create(gun, args)
             collideWithMaskBits = masks.BULLET_WALLS,
             oppositePortalMaskBits = args.isA and masks.PORTAL_B or masks.PORTAL_A,
             portalMaskBits = (args.isA and masks.PORTAL_A or masks.PORTAL_B) | masks.SENSOR,
+            retiredMask = masks.OLD_PORTAL,
             color = args.isA and vec3(0.4, 0.6, 0.3) or vec3(0.8, 0.3, 0.4)
         }
     })

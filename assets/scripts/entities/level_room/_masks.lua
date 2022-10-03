@@ -10,6 +10,7 @@ DYNAMIC_CHARACTER	= DYNAMIC_PROPS * 2
 SENSOR				= DYNAMIC_CHARACTER * 2
 PORTAL_A      		= SENSOR * 2
 PORTAL_B      		= PORTAL_A * 2
+OLD_PORTAL          = PORTAL_B * 2;
 
 
 -- visibility:

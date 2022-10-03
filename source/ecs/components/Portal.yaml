@@ -12,6 +12,8 @@ Portal:
   color: [vec3, vec3(1.0f)]
   time: [float, 0.0f]
 
+  retiredMask: [int, 0]
+
   _cpp_only:
     fbo: [FrameBuffer *, nullptr]
     playerTouching: [bool, false]
@@ -30,6 +32,7 @@ PortalGun:
   collideWithMaskBits: [int, 0]
   oppositePortalMaskBits: [int, 0]
   portalMaskBits: [int, 0]
+  retiredMask: [int, 0]
   color: [vec3, vec3(1.0f)]
   canShootSince: [float, 0.0f]
 

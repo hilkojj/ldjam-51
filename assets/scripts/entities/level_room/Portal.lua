@@ -18,7 +18,9 @@ function create(portal, args)
             letBodyIgnoreMaskWhenOnWall = collisionMasks.STATIC_WALLS,
             letBodyIgnoreMaskWhenOnFloor = collisionMasks.STATIC_FLOORS,
 
-            color = gun.color
+            color = gun.color,
+
+            retiredMask = gun.retiredMask
         },
         GhostBody {
             collider = Collider {

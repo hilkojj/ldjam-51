@@ -4,14 +4,14 @@ persistenceMode(TEMPLATE | ARGS, {"Transform"})
 collisionMasks = include("scripts/entities/level_room/_masks")
 
 defaultArgs({
+    name = "Level0"
 })
 
 loadModels("assets/models/levels/level1.glb", false)
-loadColliderMeshes("assets/models/levels/level1_collider.obj", false)
+loadColliderMeshes("assets/models/levels/level1.obj", false)
 
 function create(levelEntity, args)
-
-    setName(levelEntity, "Level1")
+    setName(levelEntity, args.name)
 
     setComponents(levelEntity, {
         Transform()
@@ -29,10 +29,10 @@ function create(levelEntity, args)
             }
         },
         ConcaveColliderShape {
-            meshName = "Level1Floor"
+            meshName = args.name.."Floor"
         },
         RenderModel {
-            modelName = "Level1Floor"
+            modelName = args.name.."Floor"
         },
         ShadowCaster(),
         ShadowReceiver()
@@ -50,10 +50,10 @@ function create(levelEntity, args)
             }
         },
         ConcaveColliderShape {
-            meshName = "Level1Wall"
+            meshName = args.name.."Wall"
         },
         RenderModel {
-            modelName = "Level1Wall"
+            modelName = args.name.."Wall"
         },
         ShadowCaster(),
         ShadowReceiver()
@@ -71,7 +71,7 @@ function create(levelEntity, args)
             }
         },
         ConcaveColliderShape {
-            meshName = "Level1PortalWall"
+            meshName = args.name.."PortalWall"
         }
     })
 
