@@ -92,7 +92,7 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
 
             TouchingPortal &tp = room->entities.get_or_assign<TouchingPortal>(victim);
             tp.timeSinceTouch = 0.0f;
-            if (dot(vec3(planePortalA), mu::Y) > 0.5f)
+            if (abs(planePortalA.y) > 0.5f)
             {
                 rigidBodyVictim->collider.collideWithMaskBits &= ~portalA.letBodyIgnoreMaskWhenOnFloor;
                 tp.ignoredMask |= portalA.letBodyIgnoreMaskWhenOnFloor;
@@ -197,7 +197,7 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
 
                         bool oppositePortalHit = false;
 
-                        room->getPhysics().rayTest(rayPos, rayPos + direction * 500.0f, [&](entt::entity oppositePortalEntity, const vec3 &hitPoint, const vec3 &normal) {
+                        room->getPhysics().rayTest(rayPos, rayPos + direction * 500.0f, [&](entt::entity oppositePortalEntity, const vec3 &, const vec3 &) {
 
                             oppositePortalHit = true;
 
@@ -223,8 +223,16 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
                         portalTemplate->createComponentsWithJsonArguments(portal, json{{"gunE", int(e)}}, false);
                         Transform &portalTransform = room->entities.get_or_assign<Transform>(portal);
                         portalTransform.position = hitPoint + normal * 0.05f;
-                        portalTransform.rotation = quatLookAt(-normal, mu::Y);
 
+                        if (abs(normal.y) > 0.5f)
+                        {
+                            const vec3 upAxis = mu::X;// normalize(vec3(direction.x, 0, direction.z));
+                            portalTransform.rotation = quatLookAt(-normal, upAxis);
+                        }
+                        else
+                        {
+                            portalTransform.rotation = quatLookAt(-normal, mu::Y);
+                        }
                         room->emitEntityEvent(e, portal);
                     }
                 }, true, gun.collideWithMaskBits);

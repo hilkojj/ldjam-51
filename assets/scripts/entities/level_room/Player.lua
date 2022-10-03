@@ -7,7 +7,7 @@ function create(player)
         })
         _G.currentRoom = currentEngine
 
-        currentEngine.hudText = "Level ".._G.levelI
+        currentEngine.hudText = "Level "..(_G.levelI + 1)
         setTimeout(player, 5, function()
             currentEngine.hudText = nil
         end)

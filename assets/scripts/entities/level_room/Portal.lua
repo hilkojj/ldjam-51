@@ -30,7 +30,7 @@ function create(portal, args)
             }
         },
         SphereColliderShape {
-            radius = 1
+            radius = 0.7
         },
         PointLight {
             color = vec3(0)
@@ -40,7 +40,12 @@ function create(portal, args)
     component.PointLight.animate(portal, "color", gun.color * vec3(10), 0.3, "circle")
 
     setComponents(createChild(portal, "Camera"), {
-        Transform()
+        Transform(),
+        --[[
+        RenderModel {
+            modelName = "ButtonMovingPart"
+        }
+        ]]--
     })
 
     onEntityEvent(portal, "Collision", function (col)
