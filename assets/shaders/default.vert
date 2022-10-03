@@ -17,6 +17,8 @@ uniform mat4 transform;
 
 uniform vec3 camPosition;
 
+uniform float time;
+
 #ifdef PORTAL_RENDER
 uniform vec4 clipPlane;
 out vec4 v_worldPosition;
@@ -33,6 +35,27 @@ out float v_fog;
 out vec3 v_modelPosition;
 #endif
 
+#ifdef FAN_ROTATING
+float rand(float x)
+{
+    return fract(sin(x) * 999.0f);
+}
+
+
+mat4 rotationMatrix(vec3 axis, float angle)
+{
+    axis = normalize(axis);
+    float s = sin(angle);
+    float c = cos(angle);
+    float oc = 1.0 - c;
+
+    return mat4(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,  0.0,
+                oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,  0.0,
+                oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c,           0.0,
+                0.0,                                0.0,                                0.0,                                1.0);
+}
+#endif
+
 void main()
 {
     #ifdef INSTANCED
@@ -41,14 +64,22 @@ void main()
 
     #endif
 
-    #ifdef PORTAL_GUN_COLORED
-    v_modelPosition = a_position;
+    vec3 pos = a_position;
+
+    #ifdef FAN_ROTATING
+
+    pos = vec3(rotationMatrix(vec3(0, 0, 1), time * 0.5f * rand(float(gl_InstanceID)) + rand(float(gl_InstanceID)) * 340.0f) * vec4(pos, 1.0f));
+
     #endif
 
 
-    gl_Position = mvp * vec4(a_position, 1.0);
+    #ifdef PORTAL_GUN_COLORED
+    v_modelPosition = pos;
+    #endif
 
-    vec4 worldPosition = transform * vec4(a_position, 1.0);
+    gl_Position = mvp * vec4(pos, 1.0);
+
+    vec4 worldPosition = transform * vec4(pos, 1.0);
     v_position = vec3(worldPosition);
     v_textureCoord = a_textureCoord;
 

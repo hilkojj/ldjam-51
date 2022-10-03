@@ -10,8 +10,8 @@ GraphicsSettings @not_a_component @json_with_keys:
 
   gammaCorrection: [float, 2.2]
   msaaSamples: [uint8, 4]
-  bloomBlurIterations: [uint8, 8]
-  bloomThreshold: [float, 4.0f]
+  bloomBlurIterations: [uint8, 6]
+  bloomThreshold: [float, 3.0f]
   shadows: [bool, true]
   maxArmatureBones: [uint, 64]
   fogStart: [float, 4.0f]

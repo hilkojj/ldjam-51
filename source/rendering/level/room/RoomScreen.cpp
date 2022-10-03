@@ -127,6 +127,10 @@ void RoomScreen::render(double deltaTime)
 {
     gu::profiler::Zone z("Room");
 
+    hdrExposure = min(1.0f, hdrExposure + float(deltaTime));
+    float timeSinceReplay = room->luaEnvironment["timePastSinceReplay"];
+    hdrExposure = min(hdrExposure, 1.0f - (timeSinceReplay - 9.5f) * 2.0f);
+
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
@@ -166,7 +170,7 @@ void RoomScreen::render(double deltaTime)
             shadowMapCon.mask = sr.visibilityMask;
             shadowMapCon.lights = false;
             shadowMapCon.materials = false;
-            shadowMapCon.customShaders = false;
+            shadowMapCon.customShaders = true;
             shadowMapCon.filter = [&] (auto e) { return room->entities.has<ShadowCaster>(e); };
             glCullFace(GL_FRONT);
             renderRoom(shadowMapCon);

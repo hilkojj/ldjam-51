@@ -178,8 +178,8 @@ function create(portie, args)
         local sun = getByName("sun")
         if valid(sun) then
             local sunRot = quat:new()
-            sunRot.x = 21
-            sunRot.y = -21
+            sunRot.x = 58
+            sunRot.y = 68
             sunRot.z = 0
 
             setComponents(sun, {
@@ -190,7 +190,7 @@ function create(portie, args)
                     rotation = false,
                     scale = false,
                     offset = Transform {
-                        position = vec3(-67, 500, 179),
+                        position = vec3(160, 110, 64),
                         rotation = sunRot
                     }
                 }

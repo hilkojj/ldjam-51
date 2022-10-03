@@ -59,7 +59,7 @@ class RoomScreen : public Screen
     FrameBuffer *fbo = NULL;
     FrameBuffer *blurPingPongFbos[2] = {NULL, NULL};
 
-    float hdrExposure = 1.0;
+    float hdrExposure = 0.0f;
 
     Texture dummyTexture;
 
