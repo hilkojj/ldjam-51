@@ -141,7 +141,7 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
                 {
                     playerTeleported = true;
                 }
-                //room->emitEntityEvent(victim, portalA, "TeleportedByPortal");
+                room->emitEntityEvent(portalAE, victim, "Teleported");
             }
         }
     });

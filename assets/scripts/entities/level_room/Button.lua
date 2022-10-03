@@ -63,7 +63,15 @@ function create(e, args)
 
     local buttonPosition = vec3(0)
 
+    local activatedBy = 0
+
     onEntityEvent(e, "Collision", function (col)
+
+        if activatedBy > 0 then
+            return
+        end
+
+        activatedBy = activatedBy + 1
 
         if component.TransformChild.has(movingPart) then
 
@@ -83,6 +91,12 @@ function create(e, args)
     if not args.stayPressed then
 
         onEntityEvent(e, "CollisionEnded", function (col)
+
+            activatedBy = activatedBy - 1
+
+            if activatedBy > 0 then
+                return
+            end
 
             component.Transform.animate(movingPart, "position", buttonPosition, 0.1, "pow2In")
             component.PointLight.animate(light, "color", vec3(0), 0.1, "pow2Out")

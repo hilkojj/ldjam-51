@@ -12,6 +12,14 @@ function create(player)
             currentEngine.hudText = nil
         end)
 
+        setComponents(player, {
+            SoundSpeaker {
+                sound = "sounds/atmosphere",
+                volume = .2,
+                looping = true
+            },
+        })
+
     else
         applyTemplate(player, "Title")
     end

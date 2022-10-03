@@ -51,9 +51,41 @@ function create(e, args)
     })
 
     currentEngine[args.name.."_activate"] = function()
-        component.Transform.animate(e, "rotation", quat:new():setIdentity(), .3, "pow2Out")
+        component.Transform.animate(e, "rotation", quat:new():setIdentity(), .5, "pow2Out")
+
+        setComponents(createChild(e), {
+            Transform(),
+            TransformChild {
+                parentEntity = e
+            },
+            SoundSpeaker {
+                sound = "sounds/bridge_open",
+                volume = .3
+            },
+            PositionedAudio(),
+            DespawnAfter {
+                time = 4
+            }
+        })
+
     end
     currentEngine[args.name.."_deactivate"] = function()
-        component.Transform.animate(e, "rotation", getDefaultRot(), .3, "pow2")
+        component.Transform.animate(e, "rotation", getDefaultRot(), .5, "pow2")
+
+
+        setComponents(createChild(e), {
+            Transform(),
+            TransformChild {
+                parentEntity = e
+            },
+            SoundSpeaker {
+                sound = "sounds/bridge_close",
+                volume = .1
+            },
+            PositionedAudio(),
+            DespawnAfter {
+                time = 4
+            }
+        })
     end
 end

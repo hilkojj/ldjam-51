@@ -50,6 +50,22 @@ function create(e)
         if component.LocalPlayer.has(otherEntity) then
             print("Player finished!")
 
+            setComponents(createEntity(), {
+
+                DespawnAfter {
+                    time = 10
+                },
+                Transform {
+                    position = component.Transform.getFor(e).position
+                },
+                SoundSpeaker {
+                    sound = "sounds/finished",
+                    volume = .5
+                },
+                --PositionedAudio()
+
+            })
+
             setTimeout(otherEntity, 0.2, function()
 
                 currentEngine.hudText = "Level "..(_G.levelI + 1).." completed! Click to continue..."

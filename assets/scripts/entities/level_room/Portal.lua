@@ -56,6 +56,25 @@ function create(portal, args)
         print("Portal UNtouch: "..(getName(col.otherEntity) or col.otherEntity))
     end)
 
+    onEntityEvent(portal, "Teleported", function (other)
+
+        setComponents(createChild(other), {
+            Transform(),
+            TransformChild {
+                parentEntity = other
+            },
+            SoundSpeaker {
+                sound = "sounds/portal",
+                volume = .3
+            },
+            PositionedAudio(),
+            DespawnAfter {
+                time = 5
+            }
+        })
+
+    end)
+
     setOnDestroyCallback(portal, function()
         if valid(args.gunE) then
             component.PointLight.getFor(args.gunE).color = vec3(0)
