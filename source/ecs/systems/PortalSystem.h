@@ -26,6 +26,8 @@ class PortalSystem : public EntitySystem
 
   private:
 
+    bool levelFinished = false;
+
     float timePastSinceReplay = 0.0f;
 
     std::vector<InputHistory> histories;

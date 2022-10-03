@@ -128,8 +128,11 @@ void RoomScreen::render(double deltaTime)
     gu::profiler::Zone z("Room");
 
     hdrExposure = min(1.0f, hdrExposure + float(deltaTime));
-    float timeSinceReplay = room->luaEnvironment["timePastSinceReplay"];
-    hdrExposure = min(hdrExposure, 1.0f - (timeSinceReplay - 9.5f) * 2.0f);
+    if (!room->luaEnvironment["levelFinished"].valid())
+    {
+        float timeSinceReplay = room->luaEnvironment["timePastSinceReplay"];
+        hdrExposure = min(hdrExposure, 1.0f - (timeSinceReplay - 9.5f) * 2.0f);
+    }
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);

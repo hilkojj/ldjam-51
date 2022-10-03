@@ -21,7 +21,7 @@ void PortalSystem::init(EntityEngine *engine)
 void PortalSystem::update(double deltaTime, EntityEngine *)
 {
     bool playerTeleported = false;
-    entt::entity playerE = entt::null;
+    entt::entity playerE = room->getByName("player");
 
     room->entities.view<Transform, GhostBody, Portal>().each([&](auto portalAE, const Transform &transformPortalA, const GhostBody &body, Portal &portalA) {
 
@@ -140,7 +140,7 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
                 if (room->entities.has<LocalPlayer>(victim))
                 {
                     playerTeleported = true;
-                    playerE = victim;
+                    assert(playerE = victim);
                 }
                 //room->emitEntityEvent(victim, portalA, "TeleportedByPortal");
             }
@@ -238,10 +238,19 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
         }
     });
 
+    bool dontReplay = false;
+    if (!levelFinished && room->luaEnvironment["levelFinished"].valid())
+    {
+        playerTeleported = true; // sort of.
+        dontReplay = true;
+        levelFinished = true;
+    }
+
     if (room->luaEnvironment["startPortalTimer"].valid())
     {
         timePastSinceReplay += deltaTime;
     }
+
     room->luaEnvironment["timePastSinceReplay"] = timePastSinceReplay;
     if (playerTeleported)
     {
@@ -254,7 +263,10 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
         playerHistory.timelineSize = 0;
         playerHistory.timeline.clear();
 
-        replay();
+        if (!dontReplay)
+        {
+            replay();
+        }
     }
     else if (timePastSinceReplay >= 10.0f)
     {
@@ -348,12 +360,13 @@ void PortalSystem::replay()
             history.timelineSize = 0;
             history.timeline.clear();
         }
-
     });
 
+    int i = 0;
     for (const InputHistory &history : histories)
     {
         entt::entity clone = room->getTemplate("Portie").create();
+        room->setName(clone, std::string("portie_" + std::to_string(i++)).c_str());
         room->entities.assign_or_replace<InputHistory>(clone, history);
         room->entities.assign_or_replace<Transform>(clone, history.timeline.front().transform);
     }

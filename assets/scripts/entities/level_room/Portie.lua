@@ -8,8 +8,6 @@ defaultArgs({
 })
 
 function create(portie, args)
-    setName(portie, "player")
-
     setComponents(portie, {
         Transform {
             position = vec3(0, 3, 0)
@@ -95,29 +93,9 @@ function create(portie, args)
         ShadowCaster(),
     })
 
-    --[[
-    local dropShadowSun = createChild(player, "drop shadow sun")
-    setComponents(dropShadowSun, {
-        Transform(),
-		TransformChild {
-			parentEntity = player,
-            offset = Transform {
-                position = vec3(0, 2.5, 0)
-            }
-		},
-        DirectionalLight {
-            color = vec3(-.7)
-        },
-        ShadowRenderer {
-            visibilityMask = masks.PLAYER,
-            resolution = ivec2(256),
-            frustrumSize = vec2(2),
-            farClipPlane = 16
-        }
-    })
-    ]]--
-
     if args.isLocalPlayer then
+
+        setName(portie, "player")
 
         local cam = getByName("3rd_person_camera")
         if valid(cam) then

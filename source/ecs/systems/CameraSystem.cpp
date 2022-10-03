@@ -20,6 +20,22 @@ void CameraSystem::update(double deltaTime, EntityEngine *)
     assert(room);
     float dT(deltaTime);
 
+    room->entities.view<Transform, CameraLookAt>().each([&](auto e, Transform &t, const CameraLookAt &lookAt) {
+        entt::entity target = room->getByName(lookAt.targetName.c_str());
+        if (room->entities.valid(target))
+        {
+            if (const Transform *targetTransform = room->entities.try_get<Transform>(target))
+            {
+                t.rotation = slerp(
+                    t.rotation, quatLookAt(normalize(targetTransform->position - t.position), mu::Y),
+                    lookAt.smoothness < 0.001 ? 1.0f : clamp(
+                        dT / lookAt.smoothness, 0.0f, 1.0f
+                    )
+                );
+            }
+        }
+    });
+
     room->entities.view<Transform, ThirdPersonFollowing>().each([&](auto e, Transform &t, ThirdPersonFollowing &following) {
 
         if (!room->entities.valid(following.target) || !room->entities.has<Transform>(following.target))

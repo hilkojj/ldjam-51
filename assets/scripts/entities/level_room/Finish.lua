@@ -52,6 +52,46 @@ function create(e)
 
             setTimeout(otherEntity, 0.2, function()
                 component.CharacterMovement.remove(otherEntity)
+                component.RigidBody.remove(otherEntity)
+
+                local newCam = createEntity()
+                applyTemplate(newCam, "Camera", {
+                    name = "finishCam",
+                    setAsMain = true
+                })
+
+                local animDuration = 3
+
+                component.CameraPerspective.animate(newCam, "fieldOfView", 35, animDuration)
+
+                local oldTransform = component.Transform.getFor(getByName("1st_person_camera"))
+                local newTransform = component.Transform.getFor(newCam)
+                newTransform.position = oldTransform.position
+                newTransform.rotation = oldTransform.rotation
+
+                component.Transform.animate(newCam, "position", component.Transform.getFor(e).position + vec3(0, 20, 0), animDuration)
+                currentEngine["levelFinished"] = true
+
+                component.CameraLookAt.getFor(newCam).targetName = "portie_0"
+
+                setTimeout(newCam, 10 - timePastSinceReplay + 0.02, function()
+
+                    local replayI = 0
+
+                    local nextReplayFollow = function()
+
+                        if getByName("portie_"..replayI) == nil then
+                            replayI = 0
+                        end
+
+                        component.CameraLookAt.getFor(newCam).targetName = "portie_"..replayI
+
+                        replayI = replayI + 1
+                    end
+
+                    setUpdateFunction(newCam, 10, nextReplayFollow, false)
+                    nextReplayFollow()
+                end)
             end)
         end
     end)

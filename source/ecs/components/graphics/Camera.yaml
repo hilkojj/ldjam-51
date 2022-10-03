@@ -15,3 +15,7 @@ ThirdPersonFollowing:
   minDistance: [float, 14]
   maxDistance: [float, 16]
   visibilityRayMask: int
+
+CameraLookAt:
+  targetName: string
+  smoothness: [float, 1.0f]
