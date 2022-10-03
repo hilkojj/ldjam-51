@@ -36,6 +36,12 @@ function nextLevel()
 
     print("Go to next level")
 
+    if _G.levelI == 3 then
+        closeActiveScreen()
+        openScreen("scripts/ui_screens/StartupScreen")
+        return
+    end
+
     _G.levelI = _G.levelI + 1
 
     closeActiveScreen()

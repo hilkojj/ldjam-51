@@ -65,7 +65,7 @@ function create(portal, args)
             },
             SoundSpeaker {
                 sound = "sounds/portal",
-                volume = .3
+                volume = .1
             },
             PositionedAudio(),
             DespawnAfter {
