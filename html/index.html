@@ -70,6 +70,27 @@
         const progressElement = document.getElementById('progress')
         const canvas = document.getElementById('canvas')
 
+        canvas.onclick = function() {
+            if(document.pointerLockElement === canvas)
+            {
+            }
+            else
+            {
+                canvas.requestPointerLock();
+            }
+        }
+
+        // pointer lock event listener
+        document.addEventListener('pointerlockchange', lockChangeAlert, false);
+
+        function lockChangeAlert() {
+            if(document.pointerLockElement === canvas) {
+                console.log('The pointer lock status is now locked');
+            } else {
+                console.log('The pointer lock status is now unlocked');
+            }
+        }
+
         canvas.addEventListener("webglcontextlost", e => {
             alert('WebGL context lost. You will need to reload the page.')
             e.preventDefault()

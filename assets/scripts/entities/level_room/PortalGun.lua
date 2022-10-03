@@ -24,7 +24,7 @@ function create(gun, args)
             }
         },
         ]]--
-        ShadowCaster(),
+        --ShadowCaster(),
         PortalGun {
             portalName = args.isA and "PortalA" or "PortalB",
             oppositePortalName = args.isA and "PortalB" or "PortalA",
@@ -51,7 +51,7 @@ function create(gun, args)
         RenderModel {
             modelName = "PortalGunTime"
         },
-        ShadowCaster(),
+        --ShadowCaster(),
         CustomShader {
             vertexShaderPath = "shaders/default.vert",
             fragmentShaderPath = "shaders/default.frag",
@@ -71,7 +71,7 @@ function create(gun, args)
         RenderModel {
             modelName = "PortalGunColored"
         },
-        ShadowCaster(),
+        --ShadowCaster(),
         CustomShader {
             vertexShaderPath = "shaders/default.vert",
             fragmentShaderPath = "shaders/default.frag",

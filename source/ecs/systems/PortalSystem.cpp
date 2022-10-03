@@ -140,7 +140,6 @@ void PortalSystem::update(double deltaTime, EntityEngine *)
                 if (room->entities.has<LocalPlayer>(victim))
                 {
                     playerTeleported = true;
-                    assert(playerE = victim);
                 }
                 //room->emitEntityEvent(victim, portalA, "TeleportedByPortal");
             }

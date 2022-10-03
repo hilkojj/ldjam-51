@@ -99,6 +99,7 @@ int main(int argc, char *argv[])
     };
 
     dibidab::init(argc, argv);
+    ImGui::GetIO().Fonts->AddFontFromFileTTF("assets/fonts/Montserrat/Montserrat-Regular.ttf", 32.0f);
 
     // enable seamless cubemap sampling for lower mip levels in the pre-filter cubemap.
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);

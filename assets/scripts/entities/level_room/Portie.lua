@@ -31,7 +31,7 @@ function create(portie, args)
             }
         },
         ]]--
-        ShadowCaster(),
+        --ShadowCaster(),
         RigidBody {
             gravity = vec3(0),
             mass = 1,
@@ -74,7 +74,7 @@ function create(portie, args)
             modelName = "PortieWheel",
             visibilityMask = args.isLocalPlayer and masks.PLAYER or -1
         },
-        ShadowCaster(),
+        --ShadowCaster(),
     })
 
     local eye = createChild(portie, "eye")
@@ -90,7 +90,7 @@ function create(portie, args)
             modelName = "PortieEye",
             visibilityMask = args.isLocalPlayer and masks.PLAYER or -1
         },
-        ShadowCaster(),
+        --ShadowCaster(),
     })
 
     if args.isLocalPlayer then

@@ -128,10 +128,55 @@ void RoomScreen::render(double deltaTime)
     gu::profiler::Zone z("Room");
 
     hdrExposure = min(1.0f, hdrExposure + float(deltaTime));
-    if (!room->luaEnvironment["levelFinished"].valid())
     {
         float timeSinceReplay = room->luaEnvironment["timePastSinceReplay"];
-        hdrExposure = min(hdrExposure, 1.0f - (timeSinceReplay - 9.5f) * 2.0f);
+
+        if (!room->luaEnvironment["levelFinished"].valid())
+        {
+            hdrExposure = min(hdrExposure, 1.0f - (timeSinceReplay - 9.5f) * 2.0f);
+        }
+        {
+            std::string hudText = std::to_string(int(timeSinceReplay + 0.95f));
+
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f);
+            ImGui::SetNextWindowBgAlpha(0);
+            ImGui::SetNextWindowPos(ImVec2(gu::width * 0.5f, 50.0f), 0, ImVec2(0.5f, 0.5f));
+            ImGui::SetNextWindowSize(ImVec2(gu::width, 50.0f));
+            ImGui::Begin("TimerText", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoScrollbar);
+            ImGui::SetWindowFontScale(1.0f - Interpolation::powIn(fract(timeSinceReplay), 3.0f) * 0.3f);
+            ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
+
+            auto textWidth = ImGui::CalcTextSize(hudText.c_str()).x;
+
+            ImGui::SetCursorPosX((gu::width - textWidth) * 0.5f);
+
+            ImGui::Text("%s", hudText.c_str());
+            ImGui::PopFont();
+            ImGui::End();
+            ImGui::PopStyleVar();
+        }
+    }
+
+    if (room->luaEnvironment["hudText"].valid())
+    {
+        std::string hudText = room->luaEnvironment["hudText"];
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.f);
+        ImGui::SetNextWindowBgAlpha(0);
+        ImGui::SetNextWindowPos(ImVec2(gu::width * 0.5f, gu::height - 140.0f), 0, ImVec2(0.5f, 0.5f));
+        ImGui::SetNextWindowSize(ImVec2(gu::width, 200.0f));
+        ImGui::Begin("HudText", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoScrollbar);
+        ImGui::SetWindowFontScale(1.0f);
+        ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
+
+        auto textWidth = ImGui::CalcTextSize(hudText.c_str()).x;
+
+        ImGui::SetCursorPosX((gu::width - textWidth) * 0.5f);
+
+        ImGui::Text("%s", hudText.c_str());
+        ImGui::PopFont();
+        ImGui::End();
+        ImGui::PopStyleVar();
     }
 
     glEnable(GL_CULL_FACE);
@@ -368,7 +413,9 @@ void RoomScreen::renderDebugStuff(double deltaTime)
     }
     if (Game::settings.unlockCamera)
     {
+#ifndef EMSCRIPTEN
         MouseInput::setLockedMode(false);
+#endif
     }
 
     gu::profiler::Zone z("debug");

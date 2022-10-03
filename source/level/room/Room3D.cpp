@@ -200,7 +200,9 @@ void Room3D::updateOrCreateCamera(double deltaTime)
     static entt::entity camEntityBeforeFlying;
     if (flyingCam && (KeyInput::justPressed(Game::settings.keyInput.stopFlyingCamera) || !dibidab::settings.showDeveloperOptions))
     {
+#ifndef EMSCRIPTEN
         MouseInput::setLockedMode(false);
+#endif
         flyingCam = false;
     }
 
@@ -210,6 +212,7 @@ void Room3D::updateOrCreateCamera(double deltaTime)
         flyingCam = true;
     }
 
+#ifndef EMSCRIPTEN
     if (flyingCam)
     {
         static float speedMultiplier = 1;
@@ -232,7 +235,9 @@ void Room3D::updateOrCreateCamera(double deltaTime)
         if (MouseInput::justPressed(GLFW_MOUSE_BUTTON_LEFT, PRIO))
         {
             flyingCam = false;
+#ifndef EMSCRIPTEN
             MouseInput::setLockedMode(false);
+#endif
             if (entities.valid(camEntityBeforeFlying))
             {
                 if (auto *t = entities.try_get<Transform>(cameraEntity))
@@ -244,6 +249,7 @@ void Room3D::updateOrCreateCamera(double deltaTime)
         }
     }
     else
+#endif
     {
         delete camera;
         camera = cameraFromEntity(cameraEntity);

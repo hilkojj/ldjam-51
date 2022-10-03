@@ -117,11 +117,13 @@ void CameraSystem::update(double deltaTime, EntityEngine *)
             return;
         }
 
+#ifndef EMSCRIPTEN
         if (!Game::settings.unlockCamera)
         {
             MouseInput::setLockedMode(true);
             firstPerson.lockedCamera = true;
         }
+#endif
 
         Transform *playerTransform = room->entities.try_get<Transform>(firstPerson.target);
         if (playerTransform == nullptr)

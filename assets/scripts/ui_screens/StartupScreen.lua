@@ -16,7 +16,7 @@ onEvent("BeforeDelete", function()
     print("startup screen done..")
 end)
 
-loadOrCreateLevel("assets/levels/level0.lvl")
+loadOrCreateLevel("assets/levels/title_screen.lvl")
 
 function startLevel()
     closeActiveScreen()

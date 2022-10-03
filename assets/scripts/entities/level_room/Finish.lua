@@ -51,6 +51,9 @@ function create(e)
             print("Player finished!")
 
             setTimeout(otherEntity, 0.2, function()
+
+                currentEngine.hudText = "Level completed! Click to continue..."
+
                 component.CharacterMovement.remove(otherEntity)
                 component.RigidBody.remove(otherEntity)
 
@@ -60,9 +63,9 @@ function create(e)
                     setAsMain = true
                 })
 
-                local animDuration = 3
+                local animDuration = 4
 
-                component.CameraPerspective.animate(newCam, "fieldOfView", 35, animDuration)
+                component.CameraPerspective.animate(newCam, "fieldOfView", 40, animDuration, "pow2")
 
                 local oldTransform = component.Transform.getFor(getByName("1st_person_camera"))
                 local newTransform = component.Transform.getFor(newCam)
@@ -74,9 +77,9 @@ function create(e)
 
                 component.CameraLookAt.getFor(newCam).targetName = "portie_0"
 
-                setTimeout(newCam, 10 - timePastSinceReplay + 0.02, function()
+                setTimeout(newCam, 10 - timePastSinceReplay, function()
 
-                    local replayI = 0
+                    local replayI = 1
 
                     local nextReplayFollow = function()
 
