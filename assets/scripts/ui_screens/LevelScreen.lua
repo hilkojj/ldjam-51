@@ -25,3 +25,22 @@ setComponents(createEntity(), {
     }
 })
 ]]--
+
+function nextLevel()
+
+    print("click")
+
+    if _G.currentRoom.levelFinished == nil then
+        return
+    end
+
+    print("Go to next level")
+
+    _G.levelI = _G.levelI + 1
+
+    closeActiveScreen()
+    _G.levelToLoad = "assets/levels/level".._G.levelI..".lvl"
+    openScreen("scripts/ui_screens/LevelScreen")
+
+end
+currentEngine.onClick = nextLevel

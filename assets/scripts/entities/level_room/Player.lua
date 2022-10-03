@@ -5,6 +5,13 @@ function create(player)
         applyTemplate(player, "Portie", {
             isLocalPlayer = true
         })
+        _G.currentRoom = currentEngine
+
+        currentEngine.hudText = "Level ".._G.levelI
+        setTimeout(player, 5, function()
+            currentEngine.hudText = nil
+        end)
+
     else
         applyTemplate(player, "Title")
     end

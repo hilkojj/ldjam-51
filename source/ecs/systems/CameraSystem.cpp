@@ -26,12 +26,12 @@ void CameraSystem::update(double deltaTime, EntityEngine *)
         {
             if (const Transform *targetTransform = room->entities.try_get<Transform>(target))
             {
-                t.rotation = slerp(
+                t.rotation = normalize(slerp(
                     t.rotation, quatLookAt(normalize(targetTransform->position - t.position), mu::Y),
                     lookAt.smoothness < 0.001 ? 1.0f : clamp(
                         dT / lookAt.smoothness, 0.0f, 1.0f
                     )
-                );
+                ));
             }
         }
     });

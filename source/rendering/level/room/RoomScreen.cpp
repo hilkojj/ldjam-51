@@ -166,7 +166,7 @@ void RoomScreen::render(double deltaTime)
         ImGui::SetNextWindowPos(ImVec2(gu::width * 0.5f, gu::height - 140.0f), 0, ImVec2(0.5f, 0.5f));
         ImGui::SetNextWindowSize(ImVec2(gu::width, 200.0f));
         ImGui::Begin("HudText", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoScrollbar);
-        ImGui::SetWindowFontScale(1.0f);
+        ImGui::SetWindowFontScale(1.0f + (sin(room->getLevel().getTime() * 5.0f) - 1.0f) * 0.06f);
         ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[2]);
 
         auto textWidth = ImGui::CalcTextSize(hudText.c_str()).x;

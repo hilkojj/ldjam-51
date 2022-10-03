@@ -1,5 +1,6 @@
 
 _G.titleScreen = true
+_G.levelI = 0
 startupArgs = getGameStartupArgs()
 
 saveGamePath = startupArgs["--single-player"] or "saves/default_save.dibdab"

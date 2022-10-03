@@ -54,7 +54,10 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
         {
             if (history.timeline.empty())
             {
-                room->entities.destroy(e);
+                //room->entities.destroy(e);
+
+                input = MovementInput();
+                room->entities.remove_if_exists<RigidBody>(e);
                 return;
             }
             // playback:
@@ -66,12 +69,14 @@ void CharacterMovementSystem::update(double deltaTime, EntityEngine *)
 
             int missingFrames = history.maxTimelineSize - history.timelineSize;
 
+            /*
             if (history.popsSkipped < missingFrames)
             {
                 history.popsSkipped++;
                 t.copyFieldsFrom(input.transform);// prevent long jump press from actually causing jump
             }
             else
+             */
             {
                 history.timeline.pop_front();
             }

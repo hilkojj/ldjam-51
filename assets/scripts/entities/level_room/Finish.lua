@@ -52,7 +52,7 @@ function create(e)
 
             setTimeout(otherEntity, 0.2, function()
 
-                currentEngine.hudText = "Level completed! Click to continue..."
+                currentEngine.hudText = "Level ".._G.levelI.." completed! Click to continue..."
 
                 component.CharacterMovement.remove(otherEntity)
                 component.RigidBody.remove(otherEntity)
